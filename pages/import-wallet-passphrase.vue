@@ -87,7 +87,6 @@ export default {
         const keyPairNew = KeyPair.fromString(secretKey);
         const publicKey = keyPairNew.getPublicKey().toString(); // keyPairNew.publicKey.toString();
         let address = Buffer.from(keyPairNew.getPublicKey().data).toString("hex");
-
         /* await axios.get(process.env.URL_API_INDEXER + "/keys/" + publicKey )
           .then((response) => {
             if(response.data?.keys?.length > 0) {

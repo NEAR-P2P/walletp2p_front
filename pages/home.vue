@@ -25,7 +25,7 @@
 
     <section id="section-available" style="padding-top: 23px;">
       <div class="space" style="gap: 10px">
-        <v-btn
+        <!-- <v-btn
           class="btn-outlined"
           style="--bg: var(--secondary); flex: 1 1"
           @click="$refs.modalCryptos.model = true"
@@ -39,7 +39,7 @@
           @click="$router.push('/documents')"
         >
           DOCUMENTOS
-        </v-btn>
+        </v-btn> -->
       </div>
 
       <aside class="container-available">
@@ -96,15 +96,17 @@
         <h1 class="p">actividad <br>reciente</h1>
 
         <div class="divcol" style="gap: 20px">
-          <ActivityCard
-            v-for="(item, i) in dataActivity" :key="i"
-            :type="item.type"
-            :account="item.account"
-            :coin="item.coin"
-            :amount="item.amount"
-            :date="item.date"
-            :text2="item.text2"
-          />
+            <ActivityCard
+              v-for="(item, i) in dataActivity" :key="i"
+              :type="item.type"
+              :account="item.account"
+              :coin="item.coin"
+              :amount="item.amount"
+              :date="item.date"
+              :text2="item.text2"
+              :hash="item.hash"
+              @click.native="navigateToExternalLink(linkExplorerDetail+'txns/'+item.hash)"
+            />
         </div>
 
         <v-btn
@@ -221,6 +223,7 @@ export default {
       copie: false,
       logoWallet,
       linkExplorer: "",
+      linkExplorerDetail: "",
       sheet: false,
       revived: false,
       balance: "0.00",
@@ -287,6 +290,7 @@ export default {
     } */
     
     this.linkExplorer = process.env.URL_EXPLORER + this.address
+    this.linkExplorerDetail = process.env.ROUTER_EXPLORER_NEAR;
     this.getBalance()
     this.recentActivity()
     /* setInterval(() => {
@@ -297,6 +301,9 @@ export default {
     this.alertSend();
   },
   methods: {
+    navigateToExternalLink(url) {
+      window.open(url, '_blank');
+    },
     alertSend() {
       const result = sessionStorage.getItem("send-result");
 

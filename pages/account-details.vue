@@ -100,7 +100,7 @@
       </v-btn>
     </v-card> -->
     
-    <v-card
+    <!-- <v-card
       v-for="(item, i) in 2" :key="i"
       class="btn-outlined d-flex align-center justify-space-between mb-4"
       style="--br: 20px; padding: 22px 17px; gap: 19px; background-color: var(--secondary) !important;"
@@ -114,10 +114,10 @@
       <v-btn style="border-radius: 50px !important; max-width: 134px; min-height: 34.26px;" class="btn flex-grow-1">
         <span style="color: #fff !important;">ABRIR</span>
       </v-btn>
-    </v-card>
+    </v-card> -->
 
     <div class="d-flex flex-column mt-10" style="gap: 15px;">
-      <v-btn
+      <!-- <v-btn
         class="btn-outlined"
         style="--b-color: var(--primary); --bg: var(--secondary)"
       >
@@ -129,7 +129,7 @@
         style="--b-color: var(--primary); --bg: var(--secondary)"
       >
         <span style="color: var(--primary) !important;">importar otra cuenta</span>
-      </v-btn>
+      </v-btn> -->
 
       <v-btn
         class="btn"
