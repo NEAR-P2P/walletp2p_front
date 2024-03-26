@@ -6,12 +6,12 @@ export default async function NearApi() {
     { connect, keyStores, WalletConnection } = nearAPI,
     keyStore = new keyStores.BrowserLocalStorageKeyStore(),
     config = {
-      networkId: "testnet",
+      networkId: process.env.Network,
       keyStore, 
-      nodeUrl: "https://rpc.testnet.near.org",
+      nodeUrl: process.env.Network === "testnet" ? "https://rpc.testnet.near.org" : "https://rpc.mainnet.near.org",
       walletUrl: localStorage.getItem("walletUrl"),
-      helperUrl: "https://helper.testnet.near.org",
-      explorerUrl: "https://explorer.testnet.near.org",
+      helperUrl: process.env.Network === "testnet" ? "https://helper.testnet.near.org" : "https://helper.mainnet.near.org",
+      explorerUrl: process.env.Network === "testnet" ? "https://explorer.testnet.near.org" : "https://explorer.mainnet.near.org",
     },
     // connect to NEAR
     near = await connect(config),
@@ -19,6 +19,7 @@ export default async function NearApi() {
     wallet = new WalletConnection(near);
 
   Vue.prototype.$wallet = wallet
+  Vue.prototype.$near = near
 }
 
 /*   when need buy

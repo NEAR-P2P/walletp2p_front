@@ -1,6 +1,8 @@
 <template>
   <div id="home" class="divcol center">
-    <modalCryptos ref="modalCryptos"
+    <modalCryptos 
+      ref="modalCryptos"
+      :data-tokens=dataTokens
     ></modalCryptos>
 
     <!-- <v-alert
@@ -25,7 +27,7 @@
 
     <section id="section-available" style="padding-top: 23px;">
       <div class="space" style="gap: 10px">
-        <!-- <v-btn
+        <v-btn
           class="btn-outlined"
           style="--bg: var(--secondary); flex: 1 1"
           @click="$refs.modalCryptos.model = true"
@@ -39,7 +41,7 @@
           @click="$router.push('/documents')"
         >
           DOCUMENTOS
-        </v-btn> -->
+        </v-btn>
       </div>
 
       <aside class="container-available">
@@ -95,7 +97,7 @@
       <div id="section-recent-activity__wrapper">
         <h1 class="p">actividad <br>reciente</h1>
 
-        <div class="divcol" style="gap: 20px">
+        <div class="divcol" style="gap: 20px; cursor: pointer">
             <ActivityCard
               v-for="(item, i) in dataActivity" :key="i"
               :type="item.type"
@@ -204,6 +206,7 @@ import * as nearAPI from "near-api-js";
 import VueQr from 'vue-qr'
 import moment from 'moment';
 import logoWallet from "~/assets/sources/logos/logo.svg";
+import tokens from '@/services/tokens';
 // import { configNear } from "@/services/nearConfig";
 import walletUtils from '@/services/wallet';
 const { utils } = nearAPI;
@@ -252,6 +255,7 @@ export default {
         }, */
       ],
       dataActivity: [],
+      dataTokens: []
     }
   },
   head() {
@@ -291,7 +295,11 @@ export default {
     
     this.linkExplorer = process.env.URL_EXPLORER + this.address
     this.linkExplorerDetail = process.env.ROUTER_EXPLORER_NEAR;
-    this.getBalance()
+    // this.getBalance()
+    this.loadTokens()
+    // Call getListTokensBalance every 5 minutes
+    // Run getListTokensBalance every 5 minutes
+
     this.recentActivity()
     /* setInterval(() => {
       this.getBalance()
@@ -304,11 +312,28 @@ export default {
     navigateToExternalLink(url) {
       window.open(url, '_blank');
     },
+    async loadTokens() {
+      // const inventory = await tokens.getInventoryUser();
+      const inventory = await tokens.getListTokensBalance()
+
+      if(!inventory) return 
+
+      // console.log("inventory.fts",inventory.fts)
+
+      this.dataTokens = inventory.fts
+
+      let balance = 0
+
+      for (const dataToken of this.dataTokens) {
+        balance += Number(dataToken.balance_usd)
+      }
+
+      this.balance = balance.toFixed(2)
+    },
     alertSend() {
       const result = sessionStorage.getItem("send-result");
 
       if(result) {
-        console.log(result)
         const resultSend = JSON.parse(result);
 
         // this.hash = resultSend.hash;
@@ -333,7 +358,6 @@ export default {
         this.copie = false;
         clearInterval(timer)
       }, 1000);
-      
     },
 
     async getBalance() {
@@ -400,14 +424,14 @@ export default {
               accountParam = items.receiver_account_id
             }
 
-
             const res = {
               type: typeParam,
               account: walletUtils.shortenAddress(accountParam),
               coin: coinParam,
               amount: amountParam,
               date: moment(items.block_timestamp/1000000).fromNow(),
-              text2
+              text2,
+              hash: items.transaction_hash
             }
 
             return res

@@ -6,8 +6,6 @@ import { configNear } from "@/services/nearConfig";
 import localStorageUser from '~/services/local-storage-user';
 const { connect } = nearAPI;
 
-
-
 const formatTokenAmount = (value, decimals = 18, precision = 2) => value && Big(value).div(Big(10).pow(decimals)).toFixed(precision);
 const parseTokenAmount = (value, decimals = 18) => value && Big(value).times(Big(10).pow(decimals)).toFixed();
 
@@ -86,6 +84,17 @@ function getPrice(fiat, crypto) {
   })
 }
 
+function getNfts(owner) {
+  const _owner = owner;
+  return axios.post(process.env.URL_API_NFT,
+    {owner: _owner})
+  .then((response) => {
+    return response.data
+  }).catch((error) => {
+    return error
+  })
+}
+
 async function nearConnection() {
   const { address, privateKey } = localStorageUser.getCurrentAccount();
 
@@ -156,4 +165,5 @@ export default {
   getPrice,
   nearConnection,
   getNearId,
+  getNfts
 }
