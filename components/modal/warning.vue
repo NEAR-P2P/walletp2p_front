@@ -8,7 +8,7 @@
     <v-card class="d-flex flex-column">
       <Header class="top-bar">
         <template #prepend>
-          <v-btn class="btn-icon-shadow ml-auto" style="--bg: #fff" @click="model = false">
+          <v-btn class="btn-icon-shadow ml-auto" style="--bg: #fff" :disabled="btnLoading" @click="model = false">
             <v-icon size="18" style="translate: 1px 0;" color="var(--primary)">mdi-close</v-icon>
           </v-btn>
         </template>
@@ -20,7 +20,7 @@
         <p class="mb-0">{{ text }}</p>
         <slot />
 
-        <v-btn class="btn-outlined-2 mt-6" @click="$emit('click')">
+        <v-btn class="btn-outlined-2 mt-6" :loading="btnLoading" @click="$emit('click'); btnLoading = true">
           ACEPTAR
         </v-btn>
       </v-card-text>
@@ -40,9 +40,14 @@ export default {
       type: String,
       default: '',
     },
+    contentClass: {
+      type: String,
+      default: '',
+    },
   },
   data() {
     return {
+      btnLoading: false,
       model: false,
     }
   }

@@ -52,7 +52,7 @@
 
         <div class="divcol center" style="margin-top: 25px;">
           <h3 class="p">SALDO DISPONIBLE</h3>
-          <img src="../assets/sources/icons/warning-blue.svg" alt="warning icon" style="--w: 25px; --h: 25px; margin-top: 6px">
+          <img src="../assets/sources/icons/warning-blue.svg"  alt="warning icon" style="--w: 25px; --h: 25px; margin-top: 6px" @click="$refs.modalCryptos.model = true">
         </div>
       </aside>
 
@@ -239,20 +239,20 @@ export default {
           action: () => { this.$router.push({ path: "/send" }) } ,// { this.alert = false; this.transfer = true; this.$refs.formEnvio.resetValidation(); this.$refs.formEnvio.reset(); },
         },
         {
+          icon: require("@/assets/sources/icons/swap.svg"),
+          text: "cambiar",
+          action: () => {this.$router.push({ path: "/swap" })},
+        },
+        {
+          icon: require("@/assets/sources/icons/plus.svg"),
+          text: "recargar",
+          action: () => { window.open("https://t.me/nearp2p", "_blank") },
+        },
+        {
           icon: require("@/assets/sources/icons/arrow-down.svg"),
           text: "recibir",
           action: () => { this.$router.push({ path: "/send-qr" }) },// {this.revived = true;},
         },
-        /* {
-          icon: require("@/assets/sources/icons/plus.svg"),
-          text: "recargar",
-          action: () => {this.sheet = true;},
-        },
-        {
-          icon: require("@/assets/sources/icons/swap.svg"),
-          text: "cambiar",
-          action: () => {this.sheet = true;},
-        }, */
       ],
       dataActivity: [],
       dataTokens: []

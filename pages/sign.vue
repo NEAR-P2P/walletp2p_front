@@ -192,6 +192,10 @@ export default {
           network: "",
           contract: []
       },
+      contentClass: {
+      type: String,
+      default: '',
+      },
     };
   },
   head() {

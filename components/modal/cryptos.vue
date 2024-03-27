@@ -30,7 +30,7 @@
         class="cryptos-card__wrapper"
       >
         <v-card
-          v-for="(item, i) in dataTokens" :key="i"
+          v-for="(item, i) in dataTokensFinal" :key="i"
           color="transparent"
           class="cryptos-card-coin space"
           @click="onSelected(item)"
@@ -57,69 +57,88 @@
 </template>
 
 <script>
+import axios from 'axios';
 import tokens from '@/services/tokens';
 
 export default {
   name: "ModalCryptos",
+  props: {
+    dataTokens: {
+      type: Array,
+      default: undefined,
+    }
+  },
   data() {
     return {
       model: false,
       search: '',
       selectedCoin: undefined,
       loading: false,
-      dataTokens: [
+      tokensData: [],
+      dataTokensFinal: [
+        // // {
+        // //   contract: ,
+        // //   balance: walletUtils.formatTokenAmount(balance, metadata.decimals, 5),
+        // //   name: metadata.name,
+        // //   symbol: metadata.symbol,
+        // //   decimals: metadata.decimals,
+        // //   icon: metadata.icon,
+        // //   balance_usd: Number(walletUtils.formatTokenAmount(balance, metadata.decimals, 5)) * Number(price),
+        // //   price
+        // // }*
         // {
-        //   contract: ,
-        //   balance: walletUtils.formatTokenAmount(balance, metadata.decimals, 5),
-        //   name: metadata.name,
-        //   symbol: metadata.symbol,
-        //   decimals: metadata.decimals,
-        //   icon: metadata.icon,
-        //   balance_usd: Number(walletUtils.formatTokenAmount(balance, metadata.decimals, 5)) * Number(price),
-        //   price
-        // }*
-        {
-          icon: require('@/assets/sources/tokens/btc.svg'),
-          coin: "ETH",
-          name: "ETHEREUM",
-          amount: "59.744",
-          balance_usd: "79.379"
-        },
-        {
-          icon: require('@/assets/sources/tokens/dai.svg'),
-          coin: "ETH",
-          name: "ETHEREUM",
-          amount: "59.744",
-          balance_usd: "79.379"
-        },
-        {
-          icon: require('@/assets/sources/tokens/klay.svg'),
-          coin: "ETH",
-          name: "ETHEREUM",
-          amount: "59.744",
-          balance_usd: "79.379"
-        },
-        {
-          icon: require('@/assets/sources/tokens/matic.svg'),
-          coin: "ETH",
-          name: "ETHEREUM",
-          amount: "59.744",
-          balance_usd: "79.379"
-        },
-        {
-          icon: require('@/assets/sources/tokens/shib.svg'),
-          coin: "ETH",
-          name: "ETHEREUM",
-          amount: "59.744",
-          balance_usd: "79.379"
-        },
+        //   icon: require('@/assets/sources/tokens/btc.svg'),
+        //   coin: "ETH",
+        //   name: "ETHEREUM",
+        //   amount: "59.744",
+        //   balance_usd: "79.379"
+        // },
+        // {
+        //   icon: require('@/assets/sources/tokens/dai.svg'),
+        //   coin: "ETH",
+        //   name: "ETHEREUM",
+        //   amount: "59.744",
+        //   balance_usd: "79.379"
+        // },
+        // {
+        //   icon: require('@/assets/sources/tokens/klay.svg'),
+        //   coin: "ETH",
+        //   name: "ETHEREUM",
+        //   amount: "59.744",
+        //   balance_usd: "79.379"
+        // },
+        // {
+        //   icon: require('@/assets/sources/tokens/matic.svg'),
+        //   coin: "ETH",
+        //   name: "ETHEREUM",
+        //   amount: "59.744",
+        //   balance_usd: "79.379"
+        // },
+        // {
+        //   icon: require('@/assets/sources/tokens/shib.svg'),
+        //   coin: "ETH",
+        //   name: "ETHEREUM",
+        //   amount: "59.744",
+        //   balance_usd: "79.379"
+        // },
       ]
     }
   },
   watch: {
     model(value) {
       if (!value) this.search = ''
+    },
+    search(value) {
+      if(this.dataTokensFinal.length <= 0) return
+      if(!this.dataTokensFinal[0]?.name) return
+
+      if (!value){
+        this.dataTokensFinal = [].concat(this.tokensData); // Set sorted inventory data
+      } else {
+        this.dataTokensFinal = this.tokensData.filter((item) => item?.name.toLowerCase().includes(value))
+      }
     }
+    
   },
 
   mounted() {
@@ -127,16 +146,42 @@ export default {
   },
 
   methods: {
-    async loadTokens() {
-      this.loading = true;
-      const inventory = await tokens.getListTokensBalance() // tokens.getInventoryUser();
+    async getContractIds(wallet) {
+      if (process.env.Network === "mainnet") {
+        const serviceUrl = `https://api.fastnear.com/v0/account/${wallet}/ft`;
 
-      if(!inventory) return
+        const result = await axios.get(serviceUrl);
 
-      this.loading = false;
+        return result.data.contract_ids
+      } else {
+        const serviceUrl = `https://api-testnet.nearblocks.io/v1/account/${wallet}/tokens`;
 
-      this.dataTokens = inventory.fts
+        const result = await axios.get(serviceUrl);
+
+        return result.data.tokens.fts
+      }
     },
+    async loadTokens() {
+        this.loading = true;
+        const inventory = await tokens.getListTokensBalance(); // Fetch tokens
+        
+        if (!inventory) {
+          this.loading = false;
+          return;
+        }
+
+        // Sort the inventory array based on token values from more to less
+        inventory.fts.sort((a, b) => {
+          // Compare the balance_usd property of each token object
+          return b.balance_usd - a.balance_usd;
+        });
+
+        this.tokensData = inventory.fts;
+        // console.log(this.tokensData)
+        // console.log([].concat(this.tokensData))
+        this.loading = false;
+        this.dataTokensFinal = [].concat(this.tokensData); // Set sorted inventory data
+      },
     onSelected(item) {
       this.model = false;
       this.$emit('on-selected-coin', item)

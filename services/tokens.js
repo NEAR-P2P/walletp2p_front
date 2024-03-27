@@ -7,15 +7,30 @@ import localStorageUser from '~/services/local-storage-user';
 // const { connect } = nearAPI;
 
 
+/**
+ * Retrieves a list of contract tokens based on the provided address.
+ *
+ * @param {string} address - The address to retrieve contract tokens for.
+ * @returns {Promise<Array<string>>} - A promise that resolves to an array of contract IDs.
+ */
 function getListContractToken(address) {
   // https://api.kitwallet.app/account//likelyTokensFromBlock
-  const network = !process.env.Network ? "-testnet" : process.env.Network === "mainnet" ? "" : "-testnet";
-  return axios.get(`https://api${network}.nearblocks.io/v1/kitwallet/account/${address}/likelyTokensFromBlock?fromBlockTimestamp=0`)
-    .then(response => {
-      return response.data.list
-    }).catch(error => {return error}
-  );
-}
+  if(process.env.Network === "mainnet" ){
+    return axios.get(`https://api.fastnear.com/v1/account/${address}/ft`)
+      .then(response => {
+        const tokens = response.data.tokens
+        return tokens.map(token => token.contract_id)
+      }).catch(error => {return error}
+    );
+  } else {
+    const network = !process.env.Network ? "-testnet" : process.env.Network === "mainnet" ? "" : "-testnet";
+    return axios.get(`https://api${network}.nearblocks.io/v1/kitwallet/account/${address}/likelyTokensFromBlock?fromBlockTimestamp=0`)
+      .then(response => {
+        return response.data.list
+      }).catch(error => {return error}
+    );
+  }
+  }
 
 // Caching mechanism for token price
 const tokenPriceCache = new Map();

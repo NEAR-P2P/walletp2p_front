@@ -13,7 +13,7 @@
         <h5 class="mb-0">ID DE BILLETERA</h5>
 
         <div class="d-flex" style="gap: 12px;">
-          <span class="center">{{ account_id.shortenAddress }}</span>
+          <span class="center" :title="account_id.address">{{ account_id.shortenAddress }}</span>
 
           <v-btn
             v-clipboard:copy="account_id.address"  
@@ -100,26 +100,27 @@
       </v-btn>
     </v-card> -->
     
-    <!-- <v-card
-      v-for="(item, i) in 2" :key="i"
+    <v-card
+      v-for="(item, i) in wallets" :key="i"
       class="btn-outlined d-flex align-center justify-space-between mb-4"
       style="--br: 20px; padding: 22px 17px; gap: 19px; background-color: var(--secondary) !important;"
     >
-      <div class="d-flex flex-column" style="gap: 5px; max-width: 126px;">
-        <h5 class="mb-0">PATRICIA2.near</h5>
+      <div class="d-flex flex-column flex-grow-1 ellipsis-tex" style="gap: 5px;" >
+        <h5 class="mb-0" :title="item.address">{{ shortenAddress(item.address) }}</h5>
 
-        <p class="mb-0">$344.71 USD</p>
+        <p class="mb-0">${{ item.balance?.toFixed(2) }} USD</p>
       </div>
 
-      <v-btn style="border-radius: 50px !important; max-width: 134px; min-height: 34.26px;" class="btn flex-grow-1">
+      <v-btn v-if="!item.disabled" style="border-radius: 50px !important; max-width: 134px; min-height: 34.26px;" class="btn flex-grow-1" @click="openWallet(item)">
         <span style="color: #fff !important;">ABRIR</span>
       </v-btn>
-    </v-card> -->
+    </v-card>
 
     <div class="d-flex flex-column mt-10" style="gap: 15px;">
-      <!-- <v-btn
+      <v-btn
         class="btn-outlined"
         style="--b-color: var(--primary); --bg: var(--secondary)"
+        @click="createAccount()"
       >
         <span style="color: var(--primary) !important;">crear una nueva cuenta</span>
       </v-btn>
@@ -127,9 +128,10 @@
       <v-btn
         class="btn-outlined"
         style="--b-color: var(--primary); --bg: var(--secondary)"
+        @click="importAccount()"
       >
         <span style="color: var(--primary) !important;">importar otra cuenta</span>
-      </v-btn> -->
+      </v-btn>
 
       <v-btn
         class="btn"
@@ -144,6 +146,7 @@
 <script>
 import localStorageUser from '~/services/local-storage-user';
 import walletUtils from '@/services/wallet';
+import utils from '~/services/utils';
 
 export default {
   name: "AccountDetails",
@@ -153,6 +156,7 @@ export default {
     return {
       copie: false,
       account_id: localStorageUser.getCurrentAccount(),
+      wallets: [],
       details: {
         'reservado para almacenamiento': {
           amount: "0",
@@ -173,10 +177,49 @@ export default {
 
   mounted() {
     this.loadDetailsAccount();
-    
+    this.loadWallets()
   },
 
   methods: {
+    shortenAddress(address) {
+      return utils.shortenAddress(address)
+    },
+    openWallet(wallet) {
+      localStorage.setItem("address", wallet.address)
+      localStorage.setItem("privateKey", wallet.privateKey)
+      localStorage.setItem("publicKey", wallet.publicKey)
+
+
+      this.$router.push("/")
+      // Clear session storage
+      sessionStorage.clear()
+    },
+    async loadWallets() {
+      const walletsAddress = localStorageUser.getAccountsWithKeys()
+
+      const currentWallet = localStorage.getItem("address")
+
+      this.wallets  = await Promise.all(walletsAddress.map(async (wallet) => {
+        const balance = await walletUtils.getBalance(wallet.address)
+        return {...wallet, balance: balance.usd, disabled: currentWallet === wallet.address}
+      }))
+    },
+
+    importAccount() {
+      const jsonCreateImportProccess = JSON.stringify({
+        path: "/",
+      })
+      sessionStorage.setItem("create-import-proccess", jsonCreateImportProccess);
+      this.$router.push({ path: '/import-wallet'});
+    },
+    createAccount() { 
+      const jsonCreateImportProccess = JSON.stringify({
+        path: "/",
+      })
+      sessionStorage.setItem("create-import-proccess", jsonCreateImportProccess);
+      this.$router.push({ path: '/create-wallet'});
+    },
+
     logout() {
       localStorageUser.removeAccountWallet();
     },
@@ -215,7 +258,7 @@ export default {
       
 
       
-    }
+    },
   },
 }
 </script>
