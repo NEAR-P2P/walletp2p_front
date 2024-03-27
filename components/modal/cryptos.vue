@@ -162,7 +162,8 @@ export default {
       }
     },
     async loadTokens() {
-        this.loading = true;
+        const nearBalanceData = sessionStorage.getItem('NEAR');
+        nearBalanceData ? this.loading = true : this.loading = false;
         const inventory = await tokens.getListTokensBalance(); // Fetch tokens
         
         if (!inventory) {

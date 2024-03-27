@@ -313,22 +313,30 @@ export default {
       window.open(url, '_blank');
     },
     async loadTokens() {
-      // const inventory = await tokens.getInventoryUser();
-      const inventory = await tokens.getListTokensBalance()
+      // Check if balance exists in session storage
+      const storedBalance = sessionStorage.getItem('balance');
 
-      if(!inventory) return 
-
-      // console.log("inventory.fts",inventory.fts)
-
-      this.dataTokens = inventory.fts
-
-      let balance = 0
-
-      for (const dataToken of this.dataTokens) {
-        balance += Number(dataToken.balance_usd)
+      if (storedBalance) {
+        this.balance = storedBalance;
+        return;
       }
 
-      this.balance = balance.toFixed(2)
+      const inventory = await tokens.getListTokensBalance();
+
+      if (!inventory) return;
+
+      this.dataTokens = inventory.fts;
+
+      let balance = 0;
+
+      for (const dataToken of this.dataTokens) {
+        balance += Number(dataToken.balance_usd);
+      }
+
+      this.balance = balance.toFixed(2);
+
+      // Store the calculated balance in session storage
+      sessionStorage.setItem('balance', this.balance);
     },
     alertSend() {
       const result = sessionStorage.getItem("send-result");

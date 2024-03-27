@@ -213,7 +213,7 @@ export default {
   
   // Build Configuration: https://go.nuxtjs.dev/config-build
   build: {
-    publicPath: '/',
+    publicPath: '/wallet-p2p/',
     // publicPath: development ? '/wallet-arepa/' : '/', //! commented
     // TODO: read about this to fix it.
     // plugins: [
