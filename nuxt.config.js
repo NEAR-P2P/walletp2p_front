@@ -26,7 +26,7 @@ export default {
 
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
-    titleTemplate: '%s - wallet-arepa',
+    titleTemplate: '%s - wallet-p2p',
     title: 'Home',
     htmlAttrs: {
       lang: 'en',
@@ -65,8 +65,8 @@ export default {
     codeChallengeMethod: '',
     responseType: 'code',
     endpoints: {
-      token: 'http://localhost:8000/wallet-arepa/login', // somm backend url to resolve your auth with google and give you the token back
-      userInfo: 'http://localhost:8000/wallet-arepa/login' // the endpoint to get the user info after you recived the token 
+      token: 'http://localhost:8000/wallet-p2p/login', // somm backend url to resolve your auth with google and give you the token back
+      userInfo: 'http://localhost:8000/wallet-p2p/login' // the endpoint to get the user info after you recived the token 
     },
   },
 
@@ -213,7 +213,7 @@ export default {
   
   // Build Configuration: https://go.nuxtjs.dev/config-build
   build: {
-    publicPath: '/wallet-arepa/',
+    publicPath: '/',
     // publicPath: development ? '/wallet-arepa/' : '/', //! commented
     // TODO: read about this to fix it.
     // plugins: [
