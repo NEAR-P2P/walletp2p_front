@@ -177,8 +177,8 @@ export default {
         });
 
         this.tokensData = inventory.fts;
-        // console.log(this.tokensData)
-        // console.log([].concat(this.tokensData))
+        console.log(this.tokensData)
+        console.log([].concat(this.tokensData))
         this.loading = false;
         this.dataTokensFinal = [].concat(this.tokensData); // Set sorted inventory data
       },
