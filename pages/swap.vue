@@ -146,7 +146,7 @@
 import * as cryptoJS from 'crypto-js';
 import axios from 'axios'
 import { utils } from "near-api-js";
-import tokens from '@/services/tokens';
+// import tokens from '@/services/tokens';
 import walletUtils from '@/services/wallet';
 
 export default {
@@ -287,9 +287,10 @@ export default {
       this.tokenSelected = "to"
       this.model = true
     },
-    async loadTokens() {
+    loadTokens() {
       // const inventory = await tokens.getInventoryUser();
-      const inventory = await tokens.getListTokensBalance()
+      const storedTokenBalances = JSON.parse(sessionStorage.getItem('allTokenBalances'));
+      const inventory = { fts: storedTokenBalances }; // await tokens.getListTokensBalance()
 
       if(!inventory) return 
 
