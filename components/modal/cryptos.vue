@@ -161,28 +161,59 @@ export default {
         return result.data.tokens.fts
       }
     },
+    /**
+     * Loads tokens data from session storage or API, sorts the inventory based on token values,
+     * calculates the total balance, and stores it in session storage.
+     * @returns {Promise<void>} A promise that resolves when the tokens data is loaded and processed.
+     */
     async loadTokens() {
-        const nearBalanceData = sessionStorage.getItem('NEAR');
-        nearBalanceData ? this.loading = true : this.loading = false;
-        const inventory = await tokens.getListTokensBalance(); // Fetch tokens
-        
-        if (!inventory) {
-          this.loading = false;
-          return;
-        }
+      this.loading = true;
+      // console.log('Loading data...');
 
-        // Sort the inventory array based on token values from more to less
-        inventory.fts.sort((a, b) => {
-          // Compare the balance_usd property of each token object
-          return b.balance_usd - a.balance_usd;
-        });
+      // Check if data exists in session storage
+      const storedTokenBalances = JSON.parse(sessionStorage.getItem('allTokenBalances'));
 
-        this.tokensData = inventory.fts;
-        // console.log(this.tokensData)
-        // console.log([].concat(this.tokensData))
+      let inventory;
+      // console.log('Stored data:', storedTokenBalances);
+      if (storedTokenBalances) {
+        // If session storage data exists, use it as the inventory
+        inventory = { fts: storedTokenBalances };
+        // console.log('Loaded data from session storage:', inventory);
+      } else {
+        // Otherwise, fetch the inventory from the API
+        inventory = await tokens.getListTokensBalance();
+        // console.log('Fetched data from API:', inventory);
+      }
+
+      if (!inventory) {
         this.loading = false;
-        this.dataTokensFinal = [].concat(this.tokensData); // Set sorted inventory data
-      },
+        return;
+      }
+
+      // Sort the inventory array based on token values from more to less
+      inventory.fts.sort((a, b) => {
+        // Compare the balance_usd property of each token object
+        return b.balance_usd - a.balance_usd;
+      });
+
+      this.tokensData = inventory.fts;
+      // console.log('Sorted data:', this.tokensData);
+
+      // Sum all balances
+      let totalBalance = 0;
+      for (const token of this.tokensData) {
+        totalBalance += Number(token.balance_usd);
+      }
+      // console.log('Total balance:', totalBalance);
+
+      // Store the total balance in session storage
+      sessionStorage.setItem('balance', totalBalance.toFixed(2));
+      // console.log('Stored total balance in session storage:', totalBalance);
+
+      this.loading = false;
+      this.dataTokensFinal = [].concat(this.tokensData); // Set sorted inventory data
+      // console.log('Final data:', this.dataTokensFinal);
+    },
     onSelected(item) {
       this.model = false;
       this.$emit('on-selected-coin', item)

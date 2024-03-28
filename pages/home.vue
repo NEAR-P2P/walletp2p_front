@@ -206,7 +206,7 @@ import * as nearAPI from "near-api-js";
 import VueQr from 'vue-qr'
 import moment from 'moment';
 import logoWallet from "~/assets/sources/logos/logo.svg";
-import tokens from '@/services/tokens';
+// import tokens from '@/services/tokens';
 // import { configNear } from "@/services/nearConfig";
 import walletUtils from '@/services/wallet';
 const { utils } = nearAPI;
@@ -312,32 +312,59 @@ export default {
     navigateToExternalLink(url) {
       window.open(url, '_blank');
     },
-    async loadTokens() {
-      // Check if balance exists in session storage
-      const storedBalance = sessionStorage.getItem('balance');
+    /**
+     * Loads tokens and balance data from session storage.
+     */
+     loadTokens() {
+        // console.log('Loading data...');
 
-      if (storedBalance) {
-        this.balance = storedBalance;
-        return;
-      }
+        // condition one get from session storage allTokenBalances
+        // Check if data exists in session storage
+        let storedTokenBalances = JSON.parse(sessionStorage.getItem('allTokenBalances'));
 
-      const inventory = await tokens.getListTokensBalance();
+        if (!storedTokenBalances) {
+          console.log('No token balances found in session storage.');
+        } else {
+          // console.log('Loaded data from session storage:', storedTokenBalances);
+          this.dataTokens = storedTokenBalances;
+        }
 
-      if (!inventory) return;
+        // Set an interval to keep checking for data in session storage every 5 seconds
+        const intervalIdOne = setInterval(() => {
+          // console.log('Checking for data in session storage...');
+          storedTokenBalances = JSON.parse(sessionStorage.getItem('allTokenBalances'));
 
-      this.dataTokens = inventory.fts;
+          if (storedTokenBalances) {
+            // console.log('Loaded data from session storage:', storedTokenBalances);
+            this.dataTokens = storedTokenBalances;
 
-      let balance = 0;
+            // If data is found, clear the interval
+            clearInterval(intervalIdOne);
+          }
+        }, 5000);
 
-      for (const dataToken of this.dataTokens) {
-        balance += Number(dataToken.balance_usd);
-      }
+        // Condition two get from  session storage balance
+        // Check if balance exists in session storage
+        let storedBalance = sessionStorage.getItem('balance');
 
-      this.balance = balance.toFixed(2);
+        if (storedBalance) {
+          this.balance = storedBalance;
+          // console.log('Loaded balance from session storage:', this.balance);
+        } 
 
-      // Store the calculated balance in session storage
-      sessionStorage.setItem('balance', this.balance);
-    },
+        // Set an interval to keep checking for a balance in session storage every 5 seconds
+        const intervalIdTwo = setInterval(() => {
+          // console.log('Checking for balance in session storage...');
+          storedBalance = sessionStorage.getItem('balance');         
+          if (storedBalance) {
+            this.balance = storedBalance;
+            // console.log('Loaded balance from session storage:', this.balance);
+
+            // If a balance is found, clear the interval
+            clearInterval(intervalIdTwo);
+          }
+        }, 5000);
+      },
     alertSend() {
       const result = sessionStorage.getItem("send-result");
 
