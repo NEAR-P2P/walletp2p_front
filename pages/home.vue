@@ -206,7 +206,7 @@ import * as nearAPI from "near-api-js";
 import VueQr from 'vue-qr'
 import moment from 'moment';
 import logoWallet from "~/assets/sources/logos/logo.svg";
-// import tokens from '@/services/tokens';
+import tokens from '@/services/tokens';
 // import { configNear } from "@/services/nearConfig";
 import walletUtils from '@/services/wallet';
 const { utils } = nearAPI;
@@ -315,7 +315,7 @@ export default {
     /**
      * Loads tokens and balance data from session storage.
      */
-     loadTokens() {
+    async loadTokens() {
         // console.log('Loading data...');
 
         // condition one get from session storage allTokenBalances
@@ -349,9 +349,13 @@ export default {
 
         if (storedBalance) {
           this.balance = storedBalance;
+          return;
           // console.log('Loaded balance from session storage:', this.balance);
         } 
 
+        // Run this line only once
+        this.balance = '0...';
+        this.balance = await tokens.getBalanceInitNear(this.address);
         // Set an interval to keep checking for a balance in session storage every 5 seconds
         const intervalIdTwo = setInterval(() => {
           // console.log('Checking for balance in session storage...');
