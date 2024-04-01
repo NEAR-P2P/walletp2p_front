@@ -280,8 +280,7 @@ async function updateBalanceLocalStorage() {
 
   // Store the total balance in session storage
   sessionStorage.setItem('balance', totalBalance.toFixed(2));
-  console.log(inventory)
-  console.log(totalBalance)
+  
   return inventory;
 }
 
