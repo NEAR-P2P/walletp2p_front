@@ -81,10 +81,12 @@
 
 <script>
 import * as nearAPI from "near-api-js";
+import tokens from '@/services/tokens';
 import { configNear } from "@/services/nearConfig";
 // import { configNear } from "@/services/nearConfig";
 import walletUtils from '@/services/wallet';
 const { keyStores, Account, Near, utils } = nearAPI;
+
 
 
 export default {
@@ -206,19 +208,23 @@ export default {
         this.envioLoading = true;
 
         if(this.tokenSymbol === "NEAR"){
-          const result = await this.sendNear().catch(error => {
+          let err = false;
+          await this.sendNear().catch(error => {
             this.$alert("error",{ desc: error })
+            err = true
           });
 
-          if(!result) {
+          if(err) {
             this.envioLoading = false;
             return
           }
         } else {
-          const result = await this.sendToken().catch(error => {
+          let err = false;
+          await this.sendToken().catch(error => {
             this.$alert("error",{ desc: error })
+            err = true;
           });
-          if(!result) {
+          if(err) {
             this.envioLoading = false;
             return
           }
@@ -226,6 +232,9 @@ export default {
 
         this.$refs.formEnvio.reset();
         this.envioLoading = false;
+
+        tokens.updateBalanceLocalStorage();
+        
 
         this.$router.push({ path: "/" });
       }

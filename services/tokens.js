@@ -116,9 +116,9 @@ async function getListTokensBalance() {
        */
       const nearBalancePromise = async () => {
         let nearBalanceData = sessionStorage.getItem('NEAR');
-        if (nearBalanceData) {
+        /* if (nearBalanceData) {
           return JSON.parse(nearBalanceData);
-        } else {
+        } else { */
           const balanceNear = await walletUtils.getBalance();
           nearBalanceData = {
             contract: "NEAR",
@@ -131,10 +131,10 @@ async function getListTokensBalance() {
             balance_usd: balanceNear.usd.toFixed(2),
             price: balanceNear.price
           };
-          sessionStorage.setItem('NEAR', JSON.stringify(nearBalanceData));
+          // sessionStorage.setItem('NEAR', JSON.stringify(nearBalanceData));
           allTokenBalances.push(nearBalanceData);
           return nearBalanceData;
-        }
+        // }
       };
 
       /**
@@ -257,12 +257,39 @@ async function getInventoryUser() {
   return list
 }
 
+async function updateBalanceLocalStorage() {
+  const inventory = await getListTokensBalance();
 
+  if (!inventory) {
+    this.loading = false;
+    return;
+  }
+
+  // Sort the inventory array based on token values from more to less
+  inventory.fts.sort((a, b) => {
+    // Compare the balance_usd property of each token object
+    return b.balance_usd - a.balance_usd;
+  });
+
+  // Sum all balances
+  const tokensData = inventory.fts;
+  let totalBalance = 0;
+  for (const token of tokensData) {
+    totalBalance += Number(token.balance_usd);
+  }
+
+  // Store the total balance in session storage
+  sessionStorage.setItem('balance', totalBalance.toFixed(2));
+  console.log(inventory)
+  console.log(totalBalance)
+  return inventory;
+}
 
 export default {
   getTokenBalance,
   getTokenMetadata,
   getListTokensBalance,
   getInventoryUser,
-  getBalanceInitNear
+  getBalanceInitNear,
+  updateBalanceLocalStorage
 }
