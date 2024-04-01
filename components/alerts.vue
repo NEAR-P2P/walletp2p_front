@@ -51,7 +51,7 @@ export default {
       if (alert.bottom) {alert.top = false}
       this.dataAlerts.push(alert)
       // clear alerts
-      setTimeout(() => this.dataAlerts.shift(), timeout);
+      // setTimeout(() => this.dataAlerts.shift(), timeout);
     },
   }
 };
