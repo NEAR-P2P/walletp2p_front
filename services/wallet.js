@@ -6,8 +6,6 @@ import { configNear } from "@/services/nearConfig";
 import localStorageUser from '~/services/local-storage-user';
 const { connect } = nearAPI;
 
-
-
 const formatTokenAmount = (value, decimals = 18, precision = 2) => value && Big(value).div(Big(10).pow(decimals)).toFixed(precision);
 const parseTokenAmount = (value, decimals = 18) => value && Big(value).times(Big(10).pow(decimals)).toFixed();
 
@@ -34,41 +32,35 @@ function executeQueryRpc(_method, _params) {
     });
 }
 
-function getBalance(_address) {
-  const address = !_address ? localStorageUser.getCurrentAccount().address : _address
+async function getBalance(_address) {
+  const address = _address || localStorageUser.getCurrentAccount().address;
   
   const params = {
     account_id: address,
     finality: "optimistic",
     request_type: "view_account"
-  }
-  return  utils.executeQueryRpc("query", params).then(async item => {
-    const amount = item?.data?.result?.amount ? Number(item.data.result.amount) : 0;
-    const storageUsage = item?.data?.result?.storage_usage ? Number(item.data.result.storage_usage) : 0;
+  };
 
-    const balanceWallet = amount / 1000000000000000000000000;
-    const reservedStorage = storageUsage / 100000;
-    const reservedTransaction = amount !== 0 ? balanceWallet - reservedStorage < 0.05 ? balanceWallet - reservedStorage : 0.05 : 0;
-    const balanceAvalible = balanceWallet - reservedStorage - reservedTransaction;
-    let _price = 0;
+  const item = await utils.executeQueryRpc("query", params);
+  const amount = Number(item?.data?.result?.amount || 0);
+  const storageUsage = Number(item?.data?.result?.storage_usage || 0);
 
-    await axios.post(process.env.URL_APIP_PRICE,
-      {fiat: "USD", crypto: "NEAR"})
-    .then((response) => {
-      _price = Number(response.data[0].value);
-    })
+  const balanceWallet = amount / 1e24;
+  const reservedStorage = storageUsage / 1e5;
+  const reservedTransaction = amount !== 0 ? Math.min(balanceWallet - reservedStorage, 0.05) : 0;
+  const balanceAvalible = balanceWallet - reservedStorage - reservedTransaction;
 
-    return { 
-      near: balanceAvalible,
-      usd: balanceAvalible * _price,
-      price: _price,
-      wallet: balanceWallet,
-      storage: reservedStorage,
-      transaction: reservedTransaction
-    }
-    
-    
-  })
+  const response = await axios.post(process.env.URL_APIP_PRICE, { fiat: "USD", crypto: "NEAR" });
+  const _price = Number(response.data[0].value);
+
+  return { 
+    near: balanceAvalible,
+    usd: balanceAvalible * _price,
+    price: _price,
+    wallet: balanceWallet,
+    storage: reservedStorage,
+    transaction: reservedTransaction
+  };
 }
 
 
@@ -81,6 +73,17 @@ function getPrice(fiat, crypto) {
   .then((response) => {
     return response.data[0].value
 
+  }).catch((error) => {
+    return error
+  })
+}
+
+function getNfts(owner) {
+  const _owner = owner;
+  return axios.post(process.env.URL_API_NFT,
+    {owner: _owner})
+  .then((response) => {
+    return response.data
   }).catch((error) => {
     return error
   })
@@ -156,4 +159,5 @@ export default {
   getPrice,
   nearConnection,
   getNearId,
+  getNfts
 }

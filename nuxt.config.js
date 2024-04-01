@@ -8,10 +8,13 @@ export default {
     Network: process.env.Network || 'testnet',
     baseUrl: process.env.BASE_URL || 'http://localhost:3000',
     URL_BACKEND: process.env.URL_BACKEND || 'http://localhost:3000',
+    URL_BACKEND_SWAP: process.env.URL_BACKEND_SWAP || 'http://localhost:3000',
     URL_APIP_PRICE: process.env.URL_APIP_PRICE || 'http://localhost:3000',
+    URL_API_NFT: process.env.URL_API_NFT || 'http://localhost:3000',
     URL_API_INDEXER: process.env.URL_API_INDEXER || 'http://localhost:3000',
     CLIEN_ID_GOOGLE: process.env.CLIEN_ID_GOOGLE || 'http://localhost:3000',
     URL_EXPLORER: process.env.URL_EXPLORER || 'http://localhost:3000',
+    URL_EXPLORER_TXS: process.env.URL_EXPLORER_TXS || 'http://localhost:3000',
     ROUTER_EXPLORER_NEAR: process.env.ROUTER_EXPLORER_NEAR || 'http://localhost:3000',
     ROUTER_RPC: process.env.ROUTER_RPC || 'http://localhost:3000',
   },
@@ -92,6 +95,7 @@ export default {
     '~/plugins/axios.js',
     '~/plugins/apexchart.js',
     '~/plugins/google-maps.js',
+    '~/plugins/unlock-wallet.js',
     '~/plugins/vue-debounce.js',
     // services
     '~/services/near-api',
@@ -141,12 +145,12 @@ export default {
     ],
     lazy: true,
     langDir: "i18n/",
-    defaultLocale: "en",
+    defaultLocale: "es",
     vueI18nLoader: true,
     detectBrowserLanguage: false,
     strategy: "prefix_except_default",
     vueI18n: {
-      fallbackLocale: "en",
+      fallbackLocale: "es",
       fallbackRoot: true,
       silentFallbackWarn: false,
       silentTranslationWarn: false,
@@ -188,7 +192,7 @@ export default {
   // Router property -  https://nuxtjs.org/docs/2.x/features/file-system-routing#the-router-property
   router: {
     base: process.env.BASE_URL,
-    // base: development ? '/wallet-p2p/' : '/', //! commented
+    // base: development ? '/wallet-arepa/' : '/', //! commented
     // middleware: ['route-validator'],
     extendRoutes(routes, resolve) {
       routes.push({
@@ -210,7 +214,7 @@ export default {
   // Build Configuration: https://go.nuxtjs.dev/config-build
   build: {
     publicPath: '/wallet-p2p/',
-    // publicPath: development ? '/wallet-p2p/' : '/', //! commented
+    // publicPath: development ? '/wallet-arepa/' : '/', //! commented
     // TODO: read about this to fix it.
     // plugins: [
     //   new webpack.ProvidePlugin({

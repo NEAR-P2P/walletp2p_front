@@ -10,7 +10,7 @@
         <div
           v-for="(item, i) in dataButtons" :key="i"
           class="action-btn d-flex align-center"
-          :class="{inactive: item.inactive}"
+          :style="`visibility: ${item.inactive ? 'hidden' : 'visible'}`"
           style="gap: 11px;"
         >
           <h5 v-if="item.name" class="mb-0" style="text-transform: uppercase !important">{{ item.name }}</h5>
@@ -61,18 +61,17 @@ export default {
         {
           name: "billetera",
           icon: require("@/assets/sources/drawer/wallet.svg"),
-          action: () => { this.model = false },
+          action: () => { this.$router.push({ path: "/" })}
         },
         {
-          inactive: true,
-          name: "staking",
-          icon: require("@/assets/sources/drawer/staking.svg"),
-          action: () => {},
+          name: "seguridad",
+          icon: require("@/assets/sources/drawer/security.svg"),
+          action: () => this.$router.push({ path: "/security" }),
         },
         {
-          name: "explorar",
+          name: "intercambiar",
           icon: require("@/assets/sources/drawer/explore.svg"),
-          action: () => { this.openExplorer() },
+          action: () => this.$router.push('/swap'),
         },
         {
           name: "cuenta",
@@ -116,6 +115,7 @@ export default {
         path: "/",
       })
       sessionStorage.setItem("create-import-proccess", jsonCreateImportProccess);
+      console.log(sessionStorage.getItem("create-import-proccess"))
       this.$router.push({ path: '/import-wallet'});
     },
     createAccount() { 

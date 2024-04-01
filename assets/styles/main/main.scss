@@ -20,6 +20,20 @@
 
 //===================================== global ======================================//
 
+.ellipsis-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  word-break: break-all !important;
+}
+.ellipsis-box {
+  --lines: initial;
+
+  display: -webkit-box;
+  -webkit-line-clamp: var(--lines);
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 
 //- menu select (desplegable menu) -//
 .v-menu__content {

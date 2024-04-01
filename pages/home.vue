@@ -1,6 +1,8 @@
 <template>
   <div id="home" class="divcol center">
-    <modalCryptos ref="modalCryptos"
+    <modalCryptos 
+      ref="modalCryptos"
+      :data-tokens=dataTokens
     ></modalCryptos>
 
     <!-- <v-alert
@@ -50,7 +52,7 @@
 
         <div class="divcol center" style="margin-top: 25px;">
           <h3 class="p">SALDO DISPONIBLE</h3>
-          <img src="../assets/sources/icons/warning-blue.svg" alt="warning icon" style="--w: 25px; --h: 25px; margin-top: 6px">
+          <img src="../assets/sources/icons/warning-blue.svg"  alt="warning icon" style="--w: 25px; --h: 25px; margin-top: 6px" @click="$refs.modalCryptos.model = true">
         </div>
       </aside>
 
@@ -95,16 +97,18 @@
       <div id="section-recent-activity__wrapper">
         <h1 class="p">actividad <br>reciente</h1>
 
-        <div class="divcol" style="gap: 20px">
-          <ActivityCard
-            v-for="(item, i) in dataActivity" :key="i"
-            :type="item.type"
-            :account="item.account"
-            :coin="item.coin"
-            :amount="item.amount"
-            :date="item.date"
-            :text2="item.text2"
-          />
+        <div class="divcol" style="gap: 20px; cursor: pointer">
+            <ActivityCard
+              v-for="(item, i) in dataActivity" :key="i"
+              :type="item.type"
+              :account="item.account"
+              :coin="item.coin"
+              :amount="item.amount"
+              :date="item.date"
+              :text2="item.text2"
+              :hash="item.hash"
+              @click.native="navigateToExternalLink(linkExplorerDetail+'txns/'+item.hash)"
+            />
         </div>
 
         <v-btn
@@ -202,6 +206,7 @@ import * as nearAPI from "near-api-js";
 import VueQr from 'vue-qr'
 import moment from 'moment';
 import logoWallet from "~/assets/sources/logos/logo.svg";
+import tokens from '@/services/tokens';
 // import { configNear } from "@/services/nearConfig";
 import walletUtils from '@/services/wallet';
 const { utils } = nearAPI;
@@ -221,6 +226,7 @@ export default {
       copie: false,
       logoWallet,
       linkExplorer: "",
+      linkExplorerDetail: "",
       sheet: false,
       revived: false,
       balance: "0.00",
@@ -233,22 +239,23 @@ export default {
           action: () => { this.$router.push({ path: "/send" }) } ,// { this.alert = false; this.transfer = true; this.$refs.formEnvio.resetValidation(); this.$refs.formEnvio.reset(); },
         },
         {
+          icon: require("@/assets/sources/icons/swap.svg"),
+          text: "cambiar",
+          action: () => {this.$router.push({ path: "/swap" })},
+        },
+        {
+          icon: require("@/assets/sources/icons/plus.svg"),
+          text: "recargar",
+          action: () => { window.open("https://t.me/nearp2p", "_blank") },
+        },
+        {
           icon: require("@/assets/sources/icons/arrow-down.svg"),
           text: "recibir",
           action: () => { this.$router.push({ path: "/send-qr" }) },// {this.revived = true;},
         },
-        /* {
-          icon: require("@/assets/sources/icons/plus.svg"),
-          text: "recargar",
-          action: () => {this.sheet = true;},
-        },
-        {
-          icon: require("@/assets/sources/icons/swap.svg"),
-          text: "cambiar",
-          action: () => {this.sheet = true;},
-        }, */
       ],
       dataActivity: [],
+      dataTokens: []
     }
   },
   head() {
@@ -287,7 +294,12 @@ export default {
     } */
     
     this.linkExplorer = process.env.URL_EXPLORER + this.address
-    this.getBalance()
+    this.linkExplorerDetail = process.env.ROUTER_EXPLORER_NEAR;
+    // this.getBalance()
+    this.loadTokens()
+    // Call getListTokensBalance every 5 minutes
+    // Run getListTokensBalance every 5 minutes
+
     this.recentActivity()
     /* setInterval(() => {
       this.getBalance()
@@ -297,11 +309,70 @@ export default {
     this.alertSend();
   },
   methods: {
+    navigateToExternalLink(url) {
+      window.open(url, '_blank');
+    },
+    /**
+     * Loads tokens and balance data from session storage.
+     */
+    async loadTokens() {
+        // console.log('Loading data...');
+
+        // condition one get from session storage allTokenBalances
+        // Check if data exists in session storage
+        let storedTokenBalances = JSON.parse(sessionStorage.getItem('allTokenBalances'));
+
+        if (!storedTokenBalances) {
+          console.log('No token balances found in session storage.');
+        } else {
+          // console.log('Loaded data from session storage:', storedTokenBalances);
+          this.dataTokens = storedTokenBalances;
+        }
+
+        // Set an interval to keep checking for data in session storage every 5 seconds
+        const intervalIdOne = setInterval(() => {
+          // console.log('Checking for data in session storage...');
+          storedTokenBalances = JSON.parse(sessionStorage.getItem('allTokenBalances'));
+
+          if (storedTokenBalances) {
+            // console.log('Loaded data from session storage:', storedTokenBalances);
+            this.dataTokens = storedTokenBalances;
+
+            // If data is found, clear the interval
+            clearInterval(intervalIdOne);
+          }
+        }, 5000);
+
+        // Condition two get from  session storage balance
+        // Check if balance exists in session storage
+        let storedBalance = sessionStorage.getItem('balance');
+
+        if (storedBalance) {
+          this.balance = storedBalance;
+          return;
+          // console.log('Loaded balance from session storage:', this.balance);
+        } 
+
+        // Run this line only once
+        this.balance = '0...';
+        this.balance = await tokens.getBalanceInitNear(this.address);
+        // Set an interval to keep checking for a balance in session storage every 5 seconds
+        const intervalIdTwo = setInterval(() => {
+          // console.log('Checking for balance in session storage...');
+          storedBalance = sessionStorage.getItem('balance');         
+          if (storedBalance) {
+            this.balance = storedBalance;
+            // console.log('Loaded balance from session storage:', this.balance);
+
+            // If a balance is found, clear the interval
+            clearInterval(intervalIdTwo);
+          }
+        }, 5000);
+      },
     alertSend() {
       const result = sessionStorage.getItem("send-result");
 
       if(result) {
-        console.log(result)
         const resultSend = JSON.parse(result);
 
         // this.hash = resultSend.hash;
@@ -326,7 +397,6 @@ export default {
         this.copie = false;
         clearInterval(timer)
       }, 1000);
-      
     },
 
     async getBalance() {
@@ -393,14 +463,14 @@ export default {
               accountParam = items.receiver_account_id
             }
 
-
             const res = {
               type: typeParam,
               account: walletUtils.shortenAddress(accountParam),
               coin: coinParam,
               amount: amountParam,
               date: moment(items.block_timestamp/1000000).fromNow(),
-              text2
+              text2,
+              hash: items.transaction_hash
             }
 
             return res
