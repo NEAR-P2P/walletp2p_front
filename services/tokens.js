@@ -115,12 +115,12 @@ async function getListTokensBalance() {
        * @returns {Promise<Object>} The NEAR balance data object.
        */
       const nearBalancePromise = async () => {
-        let nearBalanceData = sessionStorage.getItem('NEAR');
-        /* if (nearBalanceData) {
+        /* let nearBalanceData = sessionStorage.getItem('NEAR');
+        if (nearBalanceData) {
           return JSON.parse(nearBalanceData);
         } else { */
           const balanceNear = await walletUtils.getBalance();
-          nearBalanceData = {
+          const nearBalanceData = {
             contract: "NEAR",
             balance: balanceNear.near.toFixed(5),
             balanceTotal: String(balanceNear.near),

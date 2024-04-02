@@ -81,7 +81,7 @@
 
 <script>
 import * as nearAPI from "near-api-js";
-import tokens from '@/services/tokens';
+// import tokens from '@/services/tokens';
 import { configNear } from "@/services/nearConfig";
 // import { configNear } from "@/services/nearConfig";
 import walletUtils from '@/services/wallet';
@@ -231,10 +231,9 @@ export default {
         }
 
         this.$refs.formEnvio.reset();
-        this.envioLoading = false;
+        sessionStorage.removeItem('allTokenBalances')
 
-        tokens.updateBalanceLocalStorage();
-        
+        this.envioLoading = false;
 
         this.$router.push({ path: "/" });
       }
