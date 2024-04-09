@@ -54,7 +54,6 @@
 
     <Header show-append></Header>
 
-    <img src="@/assets/sources/logos/logotype.svg" alt="logo icon" class="mx-auto mt-1" style="width: 290px">
 
     <section class="d-flex flex-column" style="height: 208px; translate: 0 -30px">
       <v-text-field
@@ -126,7 +125,7 @@
       >
         <h5 class="mb-0 d-flex align-center" style="gap: 5px">
           FEE ESTIMADO
-          <img src="@/assets/sources/icons/warning-orange.svg" alt="info">
+          <img src="@/assets/sources/icons/warning-blue.svg" alt="info">
         </h5>
         
         <div class="d-flex flex-column align-end">
