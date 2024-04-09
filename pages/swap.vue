@@ -55,7 +55,7 @@
     <Header show-append></Header>
 
 
-    <section class="d-flex flex-column" style="height: 208px; translate: 0 -30px">
+    <section class="d-flex flex-column mt-15" style="height: 248px;">
       <v-text-field
         v-model="amount"
         placeholder="0.0"
@@ -95,6 +95,7 @@
         
         <span style="--fs: 12px; --ls: normal">{{ fromToken.balance }} {{fromToken.symbol}}</span>
       </v-card>
+
 
       <v-btn
         class="btn-icon mx-auto"
@@ -340,12 +341,10 @@ export default {
       this.btnLoading = true
       // console.log(this.amount, this.fromToken?.contract, this.toToken?.contract)
       if (!this.amount || this.amount <= 0 || !this.fromToken?.contract || !this.toToken?.contract || !localStorage.getItem('address')) {
-        this.btnLoading = false
         return
       }
 
       if (!this.$refs.form.validate()) {
-        this.btnLoading = false
         return
       }
 
