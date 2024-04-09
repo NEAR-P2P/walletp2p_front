@@ -54,8 +54,9 @@
 
     <Header show-append></Header>
 
+    <img src="@/assets/sources/logos/logotype.svg" alt="logo icon" class="mx-auto mt-1" style="width: 290px">
 
-    <section class="d-flex flex-column mt-15" style="height: 248px;">
+    <section class="d-flex flex-column" style="height: 208px; translate: 0 -30px">
       <v-text-field
         v-model="amount"
         placeholder="0.0"
@@ -96,7 +97,6 @@
         <span style="--fs: 12px; --ls: normal">{{ fromToken.balance }} {{fromToken.symbol}}</span>
       </v-card>
 
-
       <v-btn
         class="btn-icon mx-auto"
         style="translate: 0 -10px; --bg: #DEE6EA; box-shadow: none; --b: 1px solid var(--primary); --br: 13px"
@@ -126,7 +126,7 @@
       >
         <h5 class="mb-0 d-flex align-center" style="gap: 5px">
           FEE ESTIMADO
-          <img src="@/assets/sources/icons/warning-blue.svg" alt="info">
+          <img src="@/assets/sources/icons/warning-orange.svg" alt="info">
         </h5>
         
         <div class="d-flex flex-column align-end">
@@ -259,6 +259,15 @@ export default {
   },
 
   methods: {
+    changeSwap() {
+      const fromTokenOld = this.fromToken
+      const toTokenOld = this.toToken
+
+      this.fromToken = toTokenOld
+      this.toToken = fromTokenOld
+
+      this.debouncePreviewSwap()
+    },
     maximo() {
       if (this.fromToken.contract === "near") {
         if (this.fromToken.balanceTotal > 0.2) {
@@ -332,10 +341,12 @@ export default {
       this.btnLoading = true
       // console.log(this.amount, this.fromToken?.contract, this.toToken?.contract)
       if (!this.amount || this.amount <= 0 || !this.fromToken?.contract || !this.toToken?.contract || !localStorage.getItem('address')) {
+        this.btnLoading = false
         return
       }
 
       if (!this.$refs.form.validate()) {
+        this.btnLoading = false
         return
       }
 
@@ -385,63 +396,89 @@ export default {
         if (this.fromToken.contract === "near" && this.toToken.contract === "wrap.near") {
           // console.log("deposit", this.amount)
           // console.log(utils.format.parseNearAmount(String(this.amount)))
-          const result = await account.functionCall({
-            contractId: "wrap.near",
-            methodName: "near_deposit",
-            args: {},
-            gas: "300000000000000",
-            attachedDeposit: utils.format.parseNearAmount(String(this.amount))
-          });
+          try {
+            const result = await account.functionCall({
+              contractId: "wrap.near",
+              methodName: "near_deposit",
+              args: {},
+              gas: "300000000000000",
+              attachedDeposit: utils.format.parseNearAmount(String(this.amount))
+            });
 
-          const hash = !result?.transaction.hash ? result : result?.transaction.hash;
+            const hash = !result?.transaction.hash ? result : result?.transaction.hash;
 
-          const item = {
-            hash,
-            method: "near_deposit"
+            if (!hash) {
+              this.$router.push({ path: '/swap-error'})
+            }
+
+            const item = {
+              hash,
+              method: "near_deposit"
+            }
+
+            hashes.push(item)
+          } catch (error) {
+            this.$router.push({ path: '/swap-error'})
           }
-
-          hashes.push(item)
+          
         } else if (this.fromToken.contract === "wrap.near" && this.toToken.contract === "near") {
           // console.log("withdraw", this.amount)
+          try {
+            const result = await account.functionCall({
+              contractId: "wrap.near",
+              methodName: "near_withdraw",
+              args: {
+                amount: utils.format.parseNearAmount(String(this.amount))
+              },
+              gas: "300000000000000",
+              attachedDeposit: "1"
+            });
 
-          const result = await account.functionCall({
-            contractId: "wrap.near",
-            methodName: "near_withdraw",
-            args: {
-              amount: utils.format.parseNearAmount(String(this.amount))
-            },
-            gas: "300000000000000",
-            attachedDeposit: "1"
-          });
+            const hash = !result?.transaction.hash ? result : result?.transaction.hash;
 
-          const hash = !result?.transaction.hash ? result : result?.transaction.hash;
+            if (!hash) {
+              this.$router.push({ path: '/swap-error'})
+            }
 
-          const item = {
-            hash,
-            method: "near_withdraw"
+            const item = {
+              hash,
+              method: "near_withdraw"
+            }
+
+            hashes.push(item)
+          } catch (error) {
+            this.$router.push({ path: '/swap-error'})
           }
 
-          hashes.push(item)
+          
         } else {
-          for (const tx of this.priceRoute) {
-            for (const functionCall of tx.functionCalls) {
-              const result = await account.functionCall({
-                contractId: tx.receiverId,
-                methodName: functionCall.methodName,
-                args: functionCall.args,
-                gas: functionCall.gas,
-                attachedDeposit: functionCall.amount
-              });
+          try {
+            for (const tx of this.priceRoute) {
+              for (const functionCall of tx.functionCalls) {
+                const result = await account.functionCall({
+                  contractId: tx.receiverId,
+                  methodName: functionCall.methodName,
+                  args: functionCall.args,
+                  gas: functionCall.gas,
+                  attachedDeposit: functionCall.amount
+                });
 
-              const hash = !result?.transaction.hash ? result : result?.transaction.hash;
+                const hash = !result?.transaction.hash ? result : result?.transaction.hash;
 
-              const item = {
-                hash,
-                method: functionCall.methodName
+                if (!hash) {
+                  this.$router.push({ path: '/swap-error'})
+                }
+
+                const item = {
+                  hash,
+                  method: functionCall.methodName
+                }
+
+                hashes.push(item)
               }
-
-              hashes.push(item)
             }
+          } catch (error) {
+            this.$router.push({ path: '/swap-error'})
           }
         }
 
