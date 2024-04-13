@@ -81,6 +81,18 @@
           </v-btn>
         </aside>
       </section>
+
+
+      <v-card class="card-outline pa-4 mt-16 d-flex flex-column jsutify-center align-center" style="--bg: var(--card-2)">
+        <p class="text-center" style="--fs: 9px; width: min(100%, 192px)">PARA RETIRAR HACIA BANCO TRADICIONAL</p>
+        <v-btn
+          class="btn-outlined flex-grow-1"
+          style="--h: 34px; width: min(100%, 192px)"
+          @click="$router.push('/withdraw')"
+        >
+          <span style="color: #000 !important">RETIRAR FIAT</span>
+        </v-btn>
+      </v-card>
     </div>
   </v-form>
 </template>
