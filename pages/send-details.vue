@@ -23,6 +23,7 @@
           :success-messages="successAccount"
           :rules="required"
           required
+          @keyup="verificarAccount(accountNear)"
         >
           <template #prepend-inner>
             <h5 class="mb-0" style="color: var(--primary)">ENVIAR A</h5>
@@ -98,7 +99,7 @@ export default {
       tokenSymbol: "",
       dataToken: null,
       accountNear: null,
-      required: [(v) => !!v || "Campo requerido", (v) => this.verificarAccount(v) || "Account already exists" ],
+      required: [(v) => !!v || "Campo requerido"],
       errorAccount: null,
       successAccount: null,
       envioLoading: false,
@@ -180,26 +181,40 @@ export default {
     },
 
     async verificarAccount(value) {
-      this.successAccount = null
-      this.errorAccount = null
+      // setTimeout(async () => {
+        // this.successAccount = null
+        // this.errorAccount = null
+        if(!value) {
+          this.successAccount = null
+          this.errorAccount = null
+          return false
+        }
 
-      const keyStore = new keyStores.InMemoryKeyStore()
-      const near = new Near(configNear(keyStore))
-      const account = new Account(near.connection, value)
-      
-      let response = false
-      if(value) {
-        await account.state()
-          .then(() => {
-            response = true
-            this.successAccount = "Usuario válido"
-          }).catch(() => {
-            response = false
-            this.errorAccount = "Usuario no existe"
-          })
-      }
-      
-      return response
+        if((/^[a-z0-9_.-]+$/.test(value))) {
+          const keyStore = new keyStores.InMemoryKeyStore()
+          const near = new Near(configNear(keyStore))
+          const account = new Account(near.connection, value)
+          
+          let response = false
+          if(value) {
+            await account.state()
+              .then(() => {
+                response = true
+                this.errorAccount = null
+                this.successAccount = "Usuario válido"
+              }).catch(() => {
+                response = false
+                this.successAccount = null
+                this.errorAccount = "Usuario no existe"
+              })
+          }
+          
+          return response
+        } else {
+          this.errorAccount = "Valores no permitidos"
+          return false
+        }
+      // }, "1000");
     
     },
 

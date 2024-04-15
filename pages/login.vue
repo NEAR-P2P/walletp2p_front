@@ -79,7 +79,7 @@ export default {
       contrcat: null,
       address: null,
       routeCancel: null,
-      token: JSON.parse(sessionStorage.getItem("token")),
+      token: {}, // JSON.parse(sessionStorage.getItem("token")),
     }
   },
   head() {
@@ -102,11 +102,20 @@ export default {
       const tokenJSON = JSON.parse(tokenString);
       // sessionStorage.setItem("token", tokenString);
       this.token = tokenJSON
+
+      this.domain = this.token.domain;
+      this.contract = this.token.contract;
+      this.routeCancel = this.token.success; 
+    } else {
+      const params = this.$route.query;
+       
+      this.domain = this.token.domain = this.$route.query?.success_url ? this.$route.query?.success_url.split("/")[2] : null;
+      this.contract = this.token.contract = params?.contract_id;
+      this.routeCancel = params?.failure_url;
+      this.token.success = params?.success_url;
     }
     
-    this.domain = this.token.domain;
-    this.contract = this.token.contract;
-    this.routeCancel = this.token.success; 
+    
 
     try {
       const arrayRes = localStorageUser.getAccounts();
@@ -155,6 +164,8 @@ export default {
       sessionStorage.setItem("create-import-proccess", jsonCreateImportProccess);
       this.$router.push({path: '/import-wallet'});
     },
+
+
     selectAccount(address, array){
       const list = array === undefined ? this.dataWallets : array;
 
@@ -172,18 +183,21 @@ export default {
 
       this.dataWallets = arrayRet;
     },
+
     next() {
       if(!this.routeCancel) { this.$router.push({ path: "/"}) }
-
+      
       if(!this.token) this.$alert(ALERT_TYPE.WARNING, { desc: "no hay token" });
       
       // if (!this.address || !this.domain || !this.contract) {console.log("error"); return}
       
-      sessionStorage.setItem("connectAppAddressSelect", this.address);
+      // sessionStorage.setItem("connectAppAddressSelect", this.address);
+      localStorage.setItem("connectAppAddressSelect", this.address);
       
       this.$router.push({ path: "/login-limited-permissions", query: this.$route.query });
       
     },
+
     cancel() {
       if(this.routeCancel) {
         /* let ruta = this.token.error;

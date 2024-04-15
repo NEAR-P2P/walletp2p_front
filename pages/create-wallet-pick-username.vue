@@ -128,31 +128,45 @@ export default {
       localStorage.setItem("auth", true)
       this.$router.push(this.localePath(utils.routeLogin(this.$route.query.action)));
     },
-    async verificarAccount(value) {
-      const accountInput = value +  this.dominioNear;
-      
 
-      const keyStore = new keyStores.InMemoryKeyStore()
-      const near = new Near(configNear(keyStore))
-      const account = new Account(near.connection, accountInput)
-      
-      let response = null
-      await account.state()
-          .then(() => {
-            response = true
-            this.successAccount = null
-            this.errorAccount = "Account already exists"
-          }).catch(() => {
-            response = false
-            this.successAccount = "This account is valid"
-            this.errorAccount = null
-          })
-      
-      return response
-      // console.log(response)
-      // console.log(this.errorAccount)
-    
+    async verificarAccount(value) {
+
+      if(!value) {
+        this.successAccount = null
+        this.errorAccount = null
+        return false
+      }
+
+      const accountInput = value + this.dominioNear;
+
+      if((/^[a-z0-9_-]+$/.test(value))) {
+
+        const keyStore = new keyStores.InMemoryKeyStore()
+        const near = new Near(configNear(keyStore))
+        const account = new Account(near.connection, accountInput)
+        
+        let response = null
+        await account.state()
+            .then(() => {
+              response = true
+              this.successAccount = null
+              this.errorAccount = "Account already exists"
+            }).catch(() => {
+              response = false
+              this.successAccount = "This account is valid"
+              this.errorAccount = null
+            })
+        
+        return response
+        // console.log(response)
+        // console.log(this.errorAccount)
+      } else {
+        this.errorAccount = "Valores no permitidos"
+        return false
+      }
+
     },
+    
 
     async onCreateName() {
       try {

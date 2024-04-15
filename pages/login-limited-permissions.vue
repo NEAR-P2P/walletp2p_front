@@ -27,6 +27,7 @@
 
 
     <v-card
+      v-if="contract"
       min-height="45"
       class="btn-outlined justify-space-between align-center flex-wrap"
       style="margin-bottom: 12px; padding-right: 15px;"
@@ -79,7 +80,8 @@
 import utils from '../services/utils';
 import encryp from '../services/encryp';
 import localStorageUser from '~/services/local-storage-user';
-
+import walletFn from '~/services/wallet';
+import { ALERT_TYPE } from '~/plugins/dictionary';
 
 export default {
   name: "LimitedPermissions",
@@ -93,9 +95,10 @@ export default {
         { text: "Esto no permite que la aplicación transfiera tokens.", check: false },
       ],
       domain: null,
-      contract: null,
-      token: null,
-      address: sessionStorage.getItem("connectAppAddressSelect"),
+      contract: undefined,
+      token: {},
+      address: localStorage.getItem("connectAppAddressSelect"), // sessionStorage.getItem("connectAppAddressSelect"),
+      loginNear: false
     }
   },
   head() {
@@ -106,60 +109,93 @@ export default {
     }
   },
   mounted() {
-    // const token = sessionStorage.getItem("token");
-    let tokenJSON;
     if(this.$route.query.token){
-      // const tokenString = window.atob(this.$route.query.token);
       const tokenString = encryp.decryp(this.$route.query.token);
-      tokenJSON = JSON.parse(tokenString);
-      // sessionStorage.setItem("token", tokenString);
+      const tokenJSON = JSON.parse(tokenString);
+      
+      this.domain = tokenJSON.domain;
+      this.contract = tokenJSON.contract;
+      this.token = tokenJSON;
+    } else {
+      // console.log(this.$route.query);
+      const params = this.$route.query;
+       
+      this.domain = this.token.domain = this.$route.query?.success_url ? this.$route.query?.success_url.split("/")[2] : null;
+      this.contract = this.token.contract = !params?.contract_id ? undefined : params?.contract_id;
+      this.routeCancel = params?.failure_url;
+      this.token.success = params?.success_url;
+      this.token.public_key = params?.public_key;
+
+      this.loginNear = true;
+      
     }
+
+    console.log(this.token)
 
     /* this.domain = this.$route.query?.success_url ? this.$route.query?.success_url.split("/")[2] : "";
     this.contract = "";
     this.routeCancel = this.$route.query?.success_url; */
-    this.domain = tokenJSON.domain;
-    this.contract = tokenJSON.contract;
-    this.token = tokenJSON;
+    
   },
   methods: {
-    connect(){
+    async connect(){
       if (!this.address || !this.domain) return
-      
 
       localStorageUser.addApp({
           _address: this.address, 
-          _contract: this.domain, 
+          _contract: !this.contract ? this.domain : this.contract, 
           _domain: this.domain
       });
-
-      const account = localStorageUser.getAccount(this.address)
-
-      let ruta = this.token.success;
-      const json = JSON.stringify({
-        wallet: account.address,
-        cretaDate: new Date(),
-        email: account.email,
-        privateKey: account.privateKey,
-      })
-      const token = window.btoa(json)
       
+      const account = localStorageUser.getAccount(this.address)
+    
       // sessionStorage.removeItem("token");
       // sessionStorage.removeItem("connectAppAddressSelect")
-      
-      // const paramsOrigin = this.$route.query?.success_url.split("?").length > 0 ? "&" : "?"
-      // const ruta =  `${this.$route.query?.success_url}${paramsOrigin}account_id=${account.address}&all_keys=${account.privateKey}`;// this.token.success;
+    
+      if(this.token?.public_key) {
+        const accountNear = await walletFn.nearConnection(this.address)
+        await accountNear.addKey(
+          this.token.public_key, // public key for new account
+          this.contract, // contract this key is allowed to call (optional)
+          // "example_method", // methods this key is allowed to call (optional)
+          // "2500000000000" // allowance key can use to call methods (optional)
+        ).then(() => {
+          this.completeLogin(account)
+        }).catch((error) => {
+          this.$alert(ALERT_TYPE.ERROR, { desc: error.toString() })
+        });
+      } else { 
+        this.completeLogin(account)
+      }
 
+    },
 
+    completeLogin(_account) {
+      let ruta = this.token.success;
+
+      const json = JSON.stringify({
+        wallet: _account.address,
+        cretaDate: new Date(),
+        email: _account.email,
+        privateKey: _account.privateKey,
+      })
+
+      const token = window.btoa(json)
 
       if(this.token?.search) {
         ruta += this.token.search + "&token="+token;
       } else {
         ruta += "?token="+token;
+        if(this.loginNear) {
+          // const paramsOrigin = ""; // this.$route.query?.success_url.split("?").length > 0 ? "&" : "?"
+          const publicKeyParam = !this.token?.public_key ? "" : `&public_key=${this.token.public_key}`;
+          ruta =  `${this.$route.query?.success_url}?account_id=${_account.address}${publicKeyParam}&all_keys=${_account.publicKey}`;// this.token.success;
+        }
       }
       
       location.replace(ruta);
     },
+
     shortenAddress(address) {
       return utils.shortenAddress(address);
     },
