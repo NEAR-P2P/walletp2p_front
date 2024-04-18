@@ -32,6 +32,15 @@
         @click="maximo()"
       >USE MAX</v-btn>
     </section>
+    
+
+    <v-btn
+      class="btn-icon mx-auto"
+      style="translate: 0 -30px; --bg: #DEE6EA; box-shadow: none; --b: 1px solid var(--primary); --br: 13px"
+      @click="$router.replace('/withdraw')"
+    >
+      <img src="@/assets/sources/icons/swap-vertical.svg" alt="swap icon">
+    </v-btn>
 
 
     <section class="d-flex flex-column mb-auto" style="gap: 14px;">
