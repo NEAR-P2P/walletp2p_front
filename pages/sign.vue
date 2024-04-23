@@ -369,7 +369,7 @@ export default {
         }
 
         const urlParamsFinal = urlParams.toString().trim() === "" ? "" : `&${urlParams.toString()}`;
-        const rute = `${callbackUrl[0]}?transactionHashes=${hashes}${urlParamsFinal}`
+        const rute = `${callbackUrl[0]}?transactionHashes=${hashes.join('%2C')}${urlParamsFinal}`
 
         location.replace(rute);
         
@@ -381,6 +381,8 @@ export default {
     },
 
     async approvedMeta() {
+      console.log("paso aqui: ", this.token.json)
+      
       try {
         this.loading = true
         if(Number(this.balance) < Number(this.attachedDeposit)) {
@@ -403,8 +405,6 @@ export default {
         
         let response
         if(!Array.isArray(this.token?.json)) {
-          // this.token.json.gas = "19827514575339"
-          // console.log("paso aqui: ", this.token.json.gas)
           response = await account.functionCall(this.token.json);
         } else {
           const actions = this.token?.json.map((item) => {
@@ -415,7 +415,7 @@ export default {
                 new BN((!item?.attachedDeposit ? "0" : item.attachedDeposit))
               )
             });
-
+            
           response = await account.signAndSendTransaction({ receiverId: this.token?.json[0]?.contractId, actions});
 
         }
@@ -463,6 +463,7 @@ export default {
         this.$alert(ALERT_TYPE.ERROR, { desc: error.toString() })
         // console.log("error error: ", error.toString());
       }
+      
     },
 
     cancel() {

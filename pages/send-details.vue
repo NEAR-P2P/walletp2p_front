@@ -311,7 +311,7 @@ export default {
           });
           
           if(!storageDepositResult || !storageDepositResult.status?.SuccessValue) {
-            console.log("error al activar token");
+            // console.log("error al activar token");
             return
           }
         }

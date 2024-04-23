@@ -130,8 +130,6 @@ export default {
       
     }
 
-    console.log(this.token)
-
     /* this.domain = this.$route.query?.success_url ? this.$route.query?.success_url.split("/")[2] : "";
     this.contract = "";
     this.routeCancel = this.$route.query?.success_url; */
@@ -143,7 +141,7 @@ export default {
 
       localStorageUser.addApp({
           _address: this.address, 
-          _contract: !this.contract ? this.domain : this.contract, 
+          _contract: !this.contract ? this.domain : this.contract,
           _domain: this.domain
       });
       
