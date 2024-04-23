@@ -355,7 +355,7 @@ export default {
         }
 
         const hashesMap = transactionHashes.map((item) => {return item.hash});
-        const hashes = transactionHashes.length === 1 ? hashesMap[0] : hashesMap;
+        const hashes = transactionHashes.length === 1 ? hashesMap[0] : hashesMap.join('%2C');
 
         this.loading = false
 
@@ -369,7 +369,7 @@ export default {
         }
 
         const urlParamsFinal = urlParams.toString().trim() === "" ? "" : `&${urlParams.toString()}`;
-        const rute = `${callbackUrl[0]}?transactionHashes=${hashes.join('%2C')}${urlParamsFinal}`
+        const rute = `${callbackUrl[0]}?transactionHashes=${hashes}${urlParamsFinal}`
 
         location.replace(rute);
         
