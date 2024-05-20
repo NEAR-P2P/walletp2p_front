@@ -2,7 +2,7 @@ export default {
   data() {
     return {
       globalRules: {
-        required: [(v) => !!v || "Field required"],
+        required: (v) => !!v || "Campo requerido",
         email: [
           (v) => !!v || "Field required",
           v => {

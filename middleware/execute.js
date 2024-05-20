@@ -8,7 +8,7 @@ import encryp from '../services/encryp';
 
 export default function ({ redirect }) {
     let token = null;
-    console.log("entro aqui en grande 2 ", this.$route)
+    // console.log("entro aqui en grande 2 ", this.$route)
     if(this.$route.query.token){
       // const tokenString = window.atob(this.$route.query.token);
       const tokenString = encryp.decryp(this.$route.query.token);
@@ -16,10 +16,10 @@ export default function ({ redirect }) {
       
       sessionStorage.setItem("token", tokenString);
 
-      console.log("entro aqui en grande 3")
+      // console.log("entro aqui en grande 3")
       token = tokenJSON
     } else {
-      console.log("entro aqui en grande 4")
+      // console.log("entro aqui en grande 4")
       // console.log(sessionStorage.getItem("token"))
       token = JSON.parse(sessionStorage.getItem("token"));
     } 

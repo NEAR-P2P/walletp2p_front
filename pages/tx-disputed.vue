@@ -9,7 +9,7 @@
     </Header>
 
     <div id="tx-executed__bg-image">
-      <img src="@/assets/sources/images/approve-hand.png" alt="bg-image">
+      <img src="@/assets/sources/images/reject-hand.png" alt="bg-image">
     </div>
 
     <span class="big-title" style="z-index: 0">TRAN</span>
@@ -17,14 +17,14 @@
     <span class="big-title" style="text-indent: .5ch">CIÓN</span>
 
     <aside class="d-flex flex-column mt-6" style="gap: 10px">
-      <h3>EJECUTADA</h3>
+      <h3>EN DISPUTA</h3>
 
-      <v-btn class="btn mb-4" @click="goToExplorer">
-        VERIFICAR EN EL EXPLORADOR
+      <v-btn class="btn mb-4" @click="goToSupport">
+        CONTACTAR CON SOPORTE
       </v-btn>
 
-      <v-btn class="btn-outlined" style="--bg: #fff" @click="$router.push('/')">
-        OK
+      <v-btn class="btn-outlined" style="--bg: #fff" @click="$router.push('/trades-pending')">
+        IR A TRADE
       </v-btn>
     </aside>
   </div>
@@ -52,6 +52,9 @@ export default {
   methods: {
     goToExplorer() {
       window.open(process.env.URL_EXPLORER + localStorage.getItem('address'), '_blank');
+    },
+    goToSupport() {
+      window.open('https://t.me/nearp2p', '_blank');
     },
   },
 };

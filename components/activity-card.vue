@@ -1,18 +1,18 @@
 <template>
   <div id="activity-card">
-    <div style="display: flex; gap: var(--gap)">
+    <a style="display: flex; gap: var(--gap)" :href="getLinkHash()" target="_blank">
       <img :src="matchingType.icon" :alt="`${type} icon`">
 
       <div class="divcol">
         <span>{{matchingType.title}}{{coin ? ` ${coin}` : ''}}</span>
         <span>{{matchingType.text}} 
-          <span style="--fw: 700">{{account}}</span>
+          <span style="--fw: 700; color: black !important">{{account}}</span>
         </span>
-        <span v-if="text2">{{matchingType.text2}} 
-          <span style="--fw: 700">{{text2}}</span>
+        <span v-if="text2" style="color: black !important">{{matchingType.text2}} 
+          <span style="--fw: 700; color: black !important">{{text2}}</span>
         </span>
       </div>
-    </div>
+    </a>
 
     <div class="divcol">
       <span style="color: var(--primary)">{{amount}} {{coin}}</span>
@@ -49,9 +49,14 @@ export default {
       type: String,
       default: undefined
     },
+    hash: {
+      type: String,
+      default: undefined
+    },
   },
   data() {
     return {
+      linkHash: undefined,
       types: {
         "receive": {
           icon: require("@/assets/sources/icons/icon-recieved.svg"),
@@ -78,13 +83,13 @@ export default {
           text2: "",
         },
         "function": {
-          icon: require("@/assets/sources/icons/double-chevron-right.svg"),
+          icon: require("@/assets/sources/icons/icon-function.svg"),
           title: "function call",
           text: "Desde: ",
           text2: "Metodo: ",
         },
         "batch": {
-          icon: require("@/assets/sources/icons/menu-active.svg"),
+          icon: require("@/assets/sources/icons/icon-batch.svg"),
           title: "batch transactions",
           text: "Acciones realizadas: ",
           text2: "",
@@ -97,6 +102,14 @@ export default {
       return this.types[this.type]
     }
   },
+  mounted() {
+    // this.linkHash
+  },
+  methods: {
+    getLinkHash() {
+      return process.env.URL_EXPLORER_TXS + this.hash
+    },
+  }
 };
 </script>
 

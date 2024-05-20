@@ -1,445 +1,627 @@
 <template>
   <v-form id="withdraw" ref="form" v-model="validForm" class="d-flex flex-column">
-    <ModalCryptos
-      ref="cryptos"
-      @on-selected-coin="coin => selectToken(coin)"
-    ></ModalCryptos>
+    <ModalCryptos ref="cryptos" :filter="filter" @on-selected-coin="(coin) => selectToken(coin)"></ModalCryptos>
 
-    <ModalPayments
-      ref="payments"
+    <!-- <ModalPaymentMethods
+      ref="paymentMethods"
+      :data-payments=otherPayments
       @on-selected-coin="coin => selectToken(coin)"
-    ></ModalPayments>
+    ></ModalPaymentMethods> -->
 
-    <Header
-      hide-navbar
-      top-text="RETIRAR"
-      bottom-text="FONDOS"
-      description="MONTO QUE DESEAS RETIRAR HACIA FIAT"
-    ></Header>
+    <v-dialog v-model="modelPayments" max-width="max-content" :overlay-opacity="0.9" content-class="modal-payments">
+      <aside class="d-flex justify-end mb-5">
+        <v-text-field 
+        v-model="search" hide-details solo @input="searchPayments(search)"
+          @change="searchPayments(search)">
+          <template #append>
+            <img src="@/assets/sources/icons/magnify.svg" alt="search icon" />
+          </template>
+        </v-text-field>
+      </aside>
+
+      <v-card class="payment-card">
+        <div class="payment-card__wrapper" >
+          <v-list class="grid-list">
+            <v-list-item 
+            v-for="(payment, i) in otherPayments" :key="i" class="payment-card-coin space"
+              @click="selectPaymentDialog(payment)">
+              <div style="display: flex; align-items: center;">
+                <img :src="getFlag(payment)" alt="checked icon" style="margin-right: 10px; height: 14px;" />
+                <span class="font-weight-bold">{{ payment }}</span>
+              </div>
+              <img v-if="selectedPayment == payment" src="@/assets/sources/icons/checked.svg" alt="checked icon" />
+              <img v-else src="@/assets/sources/icons/circle.svg" alt="circle icon" />
+            </v-list-item>
+          </v-list>
+          <!-- <v-card
+            v-for="(item, i) in otherPayments" :key="i"
+            color="transparent"
+            class="payment-card-coin space"
+            @click="selectPaymentDialog(item)"
+          > 
+          <div class="center" style="gap: 14px;">
+            <img :src="getFlag(item)" alt="checked icon" style="margin-right: 10px; height: 14px;" />
+              <h5 class="mb-0">{{ item }}</h5>
+          </div> 
+
+           <div class="d-flex flex-column">
+              <span>{{ item.balance }} {{ item.coin }}</span>
+              <span>${{ item.balance_usd }}</span>
+            </div> -->
+          <!--</v-card>  -->
+        </div>
+      </v-card>
+    </v-dialog>
+
+    <Header hide-navbar top-text="RETIRAR" bottom-text="FONDOS" description="MONTO QUE DESEAS RETIRAR HACIA BOLIVARES">
+    </Header>
 
     <section class="d-flex flex-column" style="height: 208px; translate: 0 -30px">
-      <v-text-field
-        v-model="amount"
-        placeholder="0.0"
-        type="number"
-        :rules="required"
-        @input="debouncePreviewWithdraw()"
-      ></v-text-field>
+      <v-text-field 
+      v-model="amount" placeholder="0.0" type="number" :rules="required"
+        @input="debouncePreviewWithdraw()"></v-text-field>
 
-      <v-btn
-        class="btn-outlined mx-auto"
-        style="--bg: var(--secondary); --b-color: var(--primary); --c: var(--primary); --fs: 12px; --fw: 700; --ls: 0.36px; --h: 34px; width: 121px;"
-        @click="maximo()"
-      >USE MAX</v-btn>
+      <v-btn 
+      class="btn-outlined mx-auto" style="
+          --bg: var(--secondary);
+          --b-color: var(--primary);
+          --c: var(--primary);
+          --fs: 12px;
+          --fw: 700;
+          --ls: 0.36px;
+          --h: 34px;
+          width: 121px;
+        " @click="maxBalance()">USAR MÁXIMO</v-btn>
     </section>
 
 
-    <v-btn
-      class="btn-icon mx-auto"
+    <v-btn 
+    class="btn-icon mx-auto"
       style="translate: 0 -30px; --bg: #DEE6EA; box-shadow: none; --b: 1px solid var(--primary); --br: 13px"
-      @click="$router.replace('/deposit')"
-    >
+      @click="$router.replace('/deposit')">
       <img src="@/assets/sources/icons/swap-vertical.svg" alt="swap icon">
     </v-btn>
 
 
-    <section class="d-flex flex-column mb-auto" style="gap: 14px;">
-      <v-card
-        class="btn-outlined space"
-        style="--bg: var(--secondary); --b-color: #D1C4E8; padding: 0 23px;"
-        @click="$refs.cryptos.model = true"
-      >
+    <section class="d-flex flex-column mb-auto" style="gap: 14px">
+      <v-card 
+      class="btn-outlined space" style="--bg: var(--secondary); --b-color: #d1c4e8; padding: 0 23px"
+        @click="$refs.cryptos.model = true">
         <h5 class="mb-0">TOKEN A VENDER</h5>
-        
-        <div class="center" style="gap: 6px;">
-          <img :src="fromToken.icon" alt="near icon" style="width: 29px;">
-          <span style="--fs: 12px; --c: var(--primary); --ls: normal">{{ fromToken.coin }}</span>
-          <img src="@/assets/sources/icons/double-chevron-right.svg" alt="arrow right">
+
+        <div class="center" style="gap: 6px">
+          <img :src="tokenImg" alt="near icon" style="width: 29px" />
+          <span style="--fs: 12px; --c: var(--primary); --ls: normal">{{
+            tokenSymbol
+            }}</span>
+          <img src="@/assets/sources/icons/double-chevron-right.svg" alt="arrow right" />
         </div>
+      </v-card>
+
+      <v-card class="btn-outlined space" style="--bg: var(--secondary); --b-color: #d1c4e8; padding: 0 23px">
+        <h5 class="mb-0">DISPONIBLE PARA ENVIAR</h5>
+
+        <span style="--fs: 12px; --ls: normal">{{ balance }} {{ tokenSymbol }}</span>
       </v-card>
 
       <v-list>
-        <v-list-item
-          v-for="(payment, i) in payments" :key="i"
-          @click="selectedPayment = payment"
-        >
-          {{ payment }}
-          <img v-if="selectedPayment == payment" src="@/assets/sources/icons/checked.svg" alt="checked icon">
-          <img v-else src="@/assets/sources/icons/circle.svg" alt="circle icon">
+        <v-list-item v-for="(payment, i) in payments" :key="i" @click="selectPayment(payment)">
+            {{ payment }}
+          <img v-if="selectedPayment == payment" src="@/assets/sources/icons/checked.svg" alt="checked icon" />
+          <img v-else src="@/assets/sources/icons/circle.svg" alt="circle icon" />
         </v-list-item>
       </v-list>
-
-      <v-card
-        class="btn-outlined space"
-        style="--bg: var(--secondary); --b-color: #D1C4E8; padding: 0 23px;"
-        @click="$refs.payments.model = true"
-      >
+      <h5 v-if="modalNoOffers" style="color: red !important;">{{ modalNoMessage }}</h5>
+      <v-card 
+      v-if="moreBanks" class="btn-outlined space"
+        style="--bg: var(--secondary); --b-color: #d1c4e8; padding: 0 23px" @click="modelPayments = true">
         <h5 class="mb-0">BUSCAR OTRO MÉTODO</h5>
-        
-        <div class="center" style="gap: 6px;">
+
+        <div class="center" style="gap: 6px">
           <v-btn class="btn-icon" style="--b: 1px solid var(--primary)">
-            <img src="@/assets/sources/icons/magnify.svg" alt="search icon">
+            <img src="@/assets/sources/icons/magnify.svg" alt="search icon" />
           </v-btn>
-          <img src="@/assets/sources/icons/double-chevron-right.svg" alt="arrow right">
+          <img src="@/assets/sources/icons/double-chevron-right.svg" alt="arrow right" />
         </div>
       </v-card>
 
-
       <div class="d-flex mt-4" style="gap: 10px">
-        <v-btn class="btn-outlined flex-grow-1" style="--bg: var(--card-2)" @click="$router.back()">
+        <v-btn class="btn-outlined flex-grow-1" :loading="btnLoading" style="--bg: var(--card-2)" @click="$router.push('/')">
           CANCELAR
         </v-btn>
 
-        <v-btn class="btn flex-grow-1" :loading="btnLoading" :disabled="amountReceive == 0" @click="sendWithdraw">
+        <v-btn class="btn flex-grow-1" :loading="btnLoading" :disabled="btnContinue" @click="initContract">
           CONTINUAR
         </v-btn>
       </div>
 
-
-      <h6 style="font-size: 9px !important; --ff: var(--font2); --fw: 600; --fs: 10px; --lh: 1ch">
+      <h6 
+      style="
+          font-size: 9px !important;
+          --ff: var(--font2);
+          --fw: 600;
+          --fs: 10px;
+          --lh: 1ch;
+        ">
         LOS USUARIOS DEBEN RETIRAR HACIA CUENTAS PROPIAS
 
-        <img src="@/assets/sources/icons/warning-blue.svg" alt="info icon" class="ml-1" style="translate: 0 5px">
+        <img src="@/assets/sources/icons/warning-blue.svg" alt="info icon" class="ml-1" style="translate: 0 5px" />
       </h6>
     </section>
-
-
-    <Footer ref="footer">
-      <span class="text tcenter" style="--text: var(--text2); font-size: 10px !important;">© 2023 Near p2p LLC. reservados todos los derechos.</span>
-      <a class="text" style="font-size: 10px !important; --fw: 700; color: var(--primary) !important" href="#" target="_blank">
-        Términos de política y privacidad del servicio
-      </a>
-    </Footer>
   </v-form>
+  
 </template>
 
 <script>
-import * as cryptoJS from 'crypto-js';
-import axios from 'axios'
-import { utils } from "near-api-js";
-// import tokens from '@/services/tokens';
-import walletUtils from '@/services/wallet';
+import '@/assets/styles/components/payments.scss';
+// import axios from 'axios'
+import * as nearAPI from "near-api-js";
+// eslint-disable-next-line import/no-named-as-default
+import gql from "graphql-tag";
+import moment from "moment";
+import wallet from '@/services/local-storage-user'
+import tokensServices from "@/services/tokens";
+import walletUtils from "@/services/wallet";
+const { utils } = nearAPI;
 
 export default {
   name: "DepositPage",
+  middleware: ["verify-wallet"],
   data() {
     return {
-      selectedPayment: "Pago Móvil",
-      payments: [
-        "Pago Móvil",
-        "Zelle",
-        "Paypal",
+      filter: ["usdt", "near", "arp"],
+      selectedPayment: "",
+      payments: [],
+      btnContinue: true,
+      moreBanks: false,
+      otherPayments: [],
+      originalPayments: [],
+      listFlags: [],
+      required: [
+        (v) => !!v || "Campo requerido",
+        (v) => Number(v) <= Number(this.balance) || "Saldo insuficiente",
       ],
-      required: [(v) => !!v || "Campo requerido", (v) => Number(v) <= Number(this.fromToken.balanceTotal) || "Saldo insuficiente" ],
-      tokenSelected: null,
-      dataWithdraw: {},
-      priceRoute: null,
-      amountReceive: 0,
       model: false,
+      modelPayments: false,
       validForm: true,
       amount: null,
-      balance: 0.00,
+      balance: 0.0,
+      tokenImg: "data:image/svg+xml,%3Csvg width='111' height='90' viewBox='0 0 111 90' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M24.4825 0.862305H88.0496C89.5663 0.862305 90.9675 1.64827 91.7239 2.92338L110.244 34.1419C111.204 35.7609 110.919 37.8043 109.549 39.1171L58.5729 87.9703C56.9216 89.5528 54.2652 89.5528 52.6139 87.9703L1.70699 39.1831C0.305262 37.8398 0.0427812 35.7367 1.07354 34.1077L20.8696 2.82322C21.6406 1.60483 23.0087 0.862305 24.4825 0.862305ZM79.8419 14.8003V23.5597H61.7343V29.6329C74.4518 30.2819 83.9934 32.9475 84.0642 36.1425L84.0638 42.803C83.993 45.998 74.4518 48.6635 61.7343 49.3125V64.2168H49.7105V49.3125C36.9929 48.6635 27.4513 45.998 27.3805 42.803L27.381 36.1425C27.4517 32.9475 36.9929 30.2819 49.7105 29.6329V23.5597H31.6028V14.8003H79.8419ZM55.7224 44.7367C69.2943 44.7367 80.6382 42.4827 83.4143 39.4727C81.0601 36.9202 72.5448 34.9114 61.7343 34.3597V40.7183C59.7966 40.8172 57.7852 40.8693 55.7224 40.8693C53.6595 40.8693 51.6481 40.8172 49.7105 40.7183V34.3597C38.8999 34.9114 30.3846 36.9202 28.0304 39.4727C30.8066 42.4827 42.1504 44.7367 55.7224 44.7367Z' fill='%23009393'/%3E%3C/svg%3E",
+      tokenSymbol: "USDT",
       btnLoading: false,
-      fromToken: {
-        icon: require('@/assets/sources/logos/near-icon.svg'),
-        name: "Near",
-        coin: "NEAR",
-        decimals: 6,
-        contract: "NEAR",
-        balance: 0.00,
-        balanceTotal: 0.00,
-        balance_usd: 0.00
-      },
       search: "",
-      toToken: {
-        icon: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Ccircle cx='16' cy='16' r='16' fill='%2326A17B'/%3E%3Cpath fill='%23FFF' d='M17.922 17.383v-.002c-.11.008-.677.042-1.942.042-1.01 0-1.721-.03-1.971-.042v.003c-3.888-.171-6.79-.848-6.79-1.658 0-.809 2.902-1.486 6.79-1.66v2.644c.254.018.982.061 1.988.061 1.207 0 1.812-.05 1.925-.06v-2.643c3.88.173 6.775.85 6.775 1.658 0 .81-2.895 1.485-6.775 1.657m0-3.59v-2.366h5.414V7.819H8.595v3.608h5.414v2.365c-4.4.202-7.709 1.074-7.709 2.118 0 1.044 3.309 1.915 7.709 2.118v7.582h3.913v-7.584c4.393-.202 7.694-1.073 7.694-2.116 0-1.043-3.301-1.914-7.694-2.117'/%3E%3C/g%3E%3C/svg%3E",
-        name: "Tether USD",
-        coin: "USDt",
-        decimals: 6,
-        contract: "usdt.tether-token.near",
-        balance: 0.00,
-        balanceTotal: 0.00,
-        balance_usd: 0.00
-      },
-      dataTokens: [],
-      listToken: [
-        {
-          icon: require('@/assets/sources/logos/near-icon.svg'),
-          name: "Near",
-          coin: "NEAR",
-          decimals: 6,
-          contract: "near",
-          balance: 0.00,
-          balanceTotal: 0.00,
-          balance_usd: 0.00
-        },
-        {
-          icon: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Ccircle cx='16' cy='16' r='16' fill='%2326A17B'/%3E%3Cpath fill='%23FFF' d='M17.922 17.383v-.002c-.11.008-.677.042-1.942.042-1.01 0-1.721-.03-1.971-.042v.003c-3.888-.171-6.79-.848-6.79-1.658 0-.809 2.902-1.486 6.79-1.66v2.644c.254.018.982.061 1.988.061 1.207 0 1.812-.05 1.925-.06v-2.643c3.88.173 6.775.85 6.775 1.658 0 .81-2.895 1.485-6.775 1.657m0-3.59v-2.366h5.414V7.819H8.595v3.608h5.414v2.365c-4.4.202-7.709 1.074-7.709 2.118 0 1.044 3.309 1.915 7.709 2.118v7.582h3.913v-7.584c4.393-.202 7.694-1.073 7.694-2.116 0-1.043-3.301-1.914-7.694-2.117'/%3E%3C/g%3E%3C/svg%3E",
-          name: "Tether USD",
-          coin: "USDt",
-          decimals: 6,
-          contract: "usdt.tether-token.near",
-          balance: 0.00,
-          balanceTotal: 0.00,
-          balance_usd: 0.00
-        },
-        {
-          icon: "data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Ccircle fill='%23201A2D' cx='16' cy='16' r='16'/%3E%3Cg fill='%23FFF'%3E%3Cpath d='M22.818 9.586l-.6.6a8.494 8.494 0 010 11.464l.6.6a9.352 9.352 0 000-12.678v.014zM10.2 9.638a8.494 8.494 0 0111.464 0l.6-.6a9.352 9.352 0 00-12.678 0l.614.6zm-.562 12.018a8.494 8.494 0 010-11.458l-.6-.6a9.352 9.352 0 000 12.678l.6-.62zm12.018.554a8.494 8.494 0 01-11.464 0l-.6.6a9.352 9.352 0 0012.678 0l-.614-.6zm-1.942-8.286c-.12-1.252-1.2-1.672-2.566-1.8V10.4h-1.056v1.692h-.844V10.4H14.2v1.736h-2.142v1.13s.78-.014.768 0a.546.546 0 01.6.464v4.752a.37.37 0 01-.128.258.366.366 0 01-.272.092c.014.012-.768 0-.768 0l-.2 1.262h2.122v1.764h1.056V20.12h.844v1.73h1.058v-1.744c1.784-.108 3.028-.548 3.184-2.218.126-1.344-.506-1.944-1.516-2.186.614-.302.994-.862.908-1.778zm-1.48 3.756c0 1.312-2.248 1.162-2.964 1.162v-2.328c.716.002 2.964-.204 2.964 1.166zm-.49-3.28c0 1.2-1.876 1.054-2.472 1.054v-2.116c.596 0 2.472-.188 2.472 1.062z'/%3E%3Cpath d='M15.924 26.852C9.89 26.851 5 21.959 5 15.925 5 9.892 9.892 5 15.925 5c6.034 0 10.926 4.89 10.927 10.924a10.926 10.926 0 01-10.928 10.928zm0-21c-5.559.004-10.062 4.513-10.06 10.072.002 5.559 4.51 10.064 10.068 10.064 5.559 0 10.066-4.505 10.068-10.064A10.068 10.068 0 0015.924 5.852z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E",
-          name: "Wrapped BTC",
-          coin: "WBTC",
-          decimals: 8,
-          contract: "2260fac5e5542a773aa44fbcfedf7c193bc2c599.factory.bridge.near",
-          balance: 0.00,
-          balanceTotal: 0.00,
-          balance_usd: 0.00
-        },
-        {
-          icon: "https://assets.ref.finance/images/2396.png",
-          name: "Wrapped Ether",
-          coin: "WETH",
-          decimals: 18,
-          contract: "c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2.factory.bridge.near",
-          balance: 0.00,
-          balanceTotal: 0.00,
-          balance_usd: 0.00
-        },
-        {
-          icon: require('@/assets/sources/logos/near-icon.svg'),
-          name: "Wrapped NEAR",
-          coin: "wNEAR",
-          decimals: 24,
-          contract: "wrap.near",
-          balance: 0.00,
-          balanceTotal: 0.00,
-          balance_usd: 0.00
-        }
-      ]
-    }
+      address: wallet.getCurrentAccount().address,
+      subcontract: {},
+      listOffers: [],
+      minLimit: 0,
+      modalNoOffers: false,
+      modalNoMessage: false,
+      poolOrders: null,
+    };
   },
   head() {
-    const title = 'Withdraw';
+    const title = "Withdraw";
     return {
       title,
-    }
+    };
   },
-  mounted(){
-    this.loadTokens()
+  
+  beforeDestroy() {
+    if(this.poolOrders) {
+  		this.poolOrders.unsubscribe();
+    }
+	},
+  
+  mounted() {
+    if(sessionStorage.getItem("flags")) {
+      this.listFlags = JSON.parse(sessionStorage.getItem("flags"));
+    } else {
+      this.flagscdn();
+    }
+    this.getBalance();
+    this.selects();
   },
 
   methods: {
-    maximo() {
-      if (this.fromToken.contract === "near") {
-        if (this.fromToken.balanceTotal > 0.2) {
-          this.amount = this.fromToken.balanceTotal - 0.2
-        } else {
-          this.amount = 0
-        }
+    searchPayments(search) {
+      this.otherPayments = this.originalPayments.filter((item) =>
+        item.toLowerCase().includes(search.toLowerCase())
+      );
+    },
+    selectPayment(payment) {
+      this.selectedPayment = payment;
+      this.disabledContinue();
+    },
+    selectPaymentDialog(payment) {
+      this.selectedPayment = payment;
+      this.payments[2] = payment;
+      this.otherPayments = this.originalPayments.filter(item => !this.payments.includes(item));
+      // this.otherPayments = this.originalPayments.filter(
+      //   (item) => !this.payments.includes(item.payment_method)
+      // );
+      this.disabledContinue();
+      this.modelPayments = false;
+    },
+    disabledContinue() {
+      if (
+        this.amount > 0 &&
+        this.selectedPayment &&
+        this.$refs.form.validate()
+      ) {
+        this.btnContinue = false;
       } else {
-        this.amount = this.fromToken.balanceTotal
+        this.btnContinue = true;
+      }
+    },
+    maxBalance() {
+      this.amount = this.balance;
+      this.disabledContinue();
+    },
+    
+    async getBalance() {
+      const list = await tokensServices.getListTokensBalance();
+      this.balance = list.fts.find((item) => item.symbol.toLocaleUpperCase() === "USDT".toUpperCase())?.balance_usd || 0.0;
+      console.log(list.fts)
+      /* let balanceNear = 0.0;
+
+      const { near } = await walletUtils.getBalance();
+
+      if (near) {
+        balanceNear = near;
       }
 
-      this.debouncePreviewWithdraw()
+      this.balance = balanceNear.toFixed(5); */
     },
-    loadTokens() {
-      // const inventory = await tokens.getInventoryUser();
-      const storedTokenBalances = JSON.parse(sessionStorage.getItem('allTokenBalances'));
-      const inventory = { fts: storedTokenBalances }; // await tokens.getListTokensBalance()
 
-      if(!inventory) return 
+    selectToken(token) {
+      this.balance = Number(token.balance);
+      this.tokenImg = token.icon;
+      this.tokenSymbol = token.symbol;
+      this.dataToken = token.name !== "NEAR" ? token : null;
+      this.selects();
+    },
 
-      this.dataTokens = inventory.fts
-
-      // console.log("dataTokens",this.dataTokens)
-
-      for (let i = 0; i < this.listToken.length; i++) {
-        for (const token of this.dataTokens) {
-          if (token.contract.toLowerCase() === this.listToken[i].contract.toLowerCase()) {
-            this.listToken[i].balance = token.balance
-            this.listToken[i].balanceTotal = token.balanceTotal
-            this.listToken[i].balance_usd = token.balance_usd
-          }
+    debouncePreviewWithdraw() {
+      this.disabledContinue();
+      // clearTimeout(this.timer)
+      // this.timer = setTimeout(this.previewWithdraw, 1000)
+    },
+    getFlag(payment) {
+      const flag = this.listFlags.find((item) => item.payment_method === payment);
+      return flag.input1 === "" ?  "https://flagcdn.com/ve.svg" : flag.input1;
+    },
+    async flagscdn() {
+      const selects = gql`
+      query MyQuery {
+        paymentmethods {
+          payment_method
+          input1
         }
-        
-        if (this.listToken[i].contract.toLowerCase() === this.fromToken.contract.toLowerCase()) {
-          this.fromToken = this.listToken[i]
-        } else if (this.listToken[i].contract.toLowerCase() === this.toToken.contract.toLowerCase()) {
-          this.toToken = this.listToken[i]
-        }
       }
-    },
-    debouncePreviewWithdraw () {
-      clearTimeout(this.timer)
-      this.timer = setTimeout(this.previewWithdraw, 1000)
-    },
-    async previewWithdraw() {
-      this.amountReceive = 0
-      this.btnLoading = true
-      // console.log(this.amount, this.fromToken?.contract, this.toToken?.contract)
-      if (!this.amount || this.amount <= 0 || !this.fromToken?.contract || !this.toToken?.contract || !localStorage.getItem('address')) {
-        this.btnLoading = false
-        return
-      }
-
-      if (!this.$refs.form.validate()) {
-        this.btnLoading = false
-        return
-      }
-
-      if ((this.fromToken.contract === "near" || this.fromToken.contract === "wrap.near") && (this.toToken.contract === "near" || this.toToken.contract === "wrap.near")) {
-        this.amountReceive = this.amount
-        this.btnLoading = false
-        return
-      }
-
-      const item = {
-        tokenIn: this.fromToken.contract,
-        tokenOut: this.toToken.contract,
-        address: localStorage.getItem('address'),
-        amount: this.amount
-      }
-
-      await axios.post(process.env.URL_BACKEND_SWAP +'/preview-withdraw', item)
-      // await axios.post("http://localhost:3000/api" +'/preview-withdraw', item)
-        .then((response) => {
-         //  console.log(response.data)
-          if (response.data) {
-            this.priceRoute = response.data.priceRoute
-            this.dataWithdraw = response.data.dataWithdraw
-
-            this.amountReceive = this.dataWithdraw.toAmount / Math.pow(10, this.dataWithdraw.toDecimals)
-
-            // console.log("DATA",this.priceRoute)
-          }
-
-          this.btnLoading = false
-          
-        }).catch((err) => {
-          console.log(err)
-          this.btnLoading = false
-          throw new Error ("Failed to get data price route")
+      `;
+      await this.$apollo
+        .watchQuery({
+          query: selects,
+          // fetchPolicy: 'network-only',
+          pollInterval: 5000,
         })
+        .subscribe(({ data }) => {
+          this.listFlags = [];
+          Object.entries(data.paymentmethods).forEach(
+            ([key, value]) => {
+              this.listFlags.push(value);
+            }
+          );
+          sessionStorage.setItem("flags", JSON.stringify(this.listFlags));
+        });
     },
-    async sendWithdraw() {
+    selects() {
+      const selects = gql`
+      query MyQuery( $token: String, $address: String ) {
+        offerssells(
+          where: {asset_contains: $token, owner_id_not: $address, is_pause: false}
+          orderBy: exchange_rate
+          orderDirection: desc
+        ) {
+          amount
+          asset
+          exchange_rate
+          fiat_method
+          id
+          max_limit
+          min_limit
+          owner_id
+          remaining_amount
+          status
+          terms_conditions
+          time
+          payment_method {
+            payment_method
+            payment_method_id
+          }
+        }
+      }
+      `;
+      // const eltoken = this.selectToken;
+      let paymentMethods = new Set();
+      this.listOffers = [];
+      this.poolOrders = this.$apollo
+        .watchQuery({
+          query: selects,
+          // fetchPolicy: 'network-only',
+          pollInterval: 5000,
+          variables: {
+            token: this.tokenSymbol.toLocaleUpperCase(),
+            address: wallet.getCurrentAccount().address,
+          }
+        })
+        .subscribe(({ data }) => {
+          data.offerssells.forEach(offer => {
+            offer.payment_method.forEach(method => {
+              paymentMethods.add(method.payment_method);
+            });
+          });
+          Object.entries(data.offerssells).forEach(
+            ([key, value]) => {
+              this.listOffers.push(value);
+            }
+          );
+          paymentMethods = Array.from(paymentMethods);
+          paymentMethods.length > 3 ? this.moreBanks = true : this.moreBanks = false;
+          /**
+           * If the paymentMethods array includes "Pago Móvil",
+           * this code filters out "Pago Móvil" from the array
+           * and adds it back to the beginning of the array.
+           */
+          if (paymentMethods.includes("Pago Móvil")) {
+            paymentMethods = paymentMethods.filter(method => method !== "Pago Móvil");
+            paymentMethods.unshift("Pago Móvil");
+          }
+
+          this.payments = paymentMethods.slice(0, 3);
+
+          this.otherPayments = paymentMethods.filter(item => !this.payments.includes(item));
+          this.originalPayments = paymentMethods;
+        });
+    },
+    async initContract() {
+      this.tokenSymbol === "NEAR" ? await this.initContractNEAR() : await this.initContractUSDT();
+    },
+    async initContractUSDT() {
+      this.btnLoading = true;
+      const CONTRACT_NAME = process.env.VUE_APP_CONTRACT_NAME;
+      const CONTRACT_NAME_USDT = process.env.VUE_APP_CONTRACT_NAME_USDT;
+      /**
+       * Converts the withdrawal amount to the appropriate format based on the token symbol.
+       * If the token symbol is "NEAR", the amount is multiplied by 1e24.
+       * If the token symbol is not "NEAR", the amount is multiplied by 1e6.
+       */
+      const orderAmount = this.tokenSymbol === "NEAR" ? this.NEARyoctoNEAR(this.amount) : (this.amount * 1e6).toString();
+      // Filtering the list by payment method and the highest exchange rate
+      // and the remaining amount is greater than the order amount
+      // and the prder amount is greater than the min limit
+      this.filteredOffers = this.listOffers
+        .filter(offer => offer.payment_method.some(method => method.payment_method === this.selectedPayment))
+        .filter(offer => parseFloat(offer.remaining_amount) >= parseFloat(orderAmount))
+        .filter(offer => parseFloat(offer.min_limit) <= parseFloat(orderAmount))
+        .sort((a, b) => b.exchange_rate - a.exchange_rate)
+        .find(() => true);
+      const lowestMinAmount = Math.min(...this.listOffers.map(offer => offer.min_limit));
+      if (!this.filteredOffers) {
+        const lowestMinAmountFormated = this.tokenSymbol === "NEAR" ? this.yoctoNEARNEAR(lowestMinAmount) : lowestMinAmount / 1e6;
+        this.modalNoMessage = "No hay ofertas disponibles, busque un monto superior a " + lowestMinAmountFormated
+        this.modalNoOffers = true;
+        this.btnLoading = false;
+        return;
+      }
+      // Filter paymet method as per selected payment
+      const filteredPaymentMethod = this.filteredOffers.payment_method.find(method => method.payment_method === this.selectedPayment);
+
       try {
         const account = await walletUtils.nearConnection();
+        this.subcontract = await account.viewFunctionV1(
+          CONTRACT_NAME,
+          "get_subcontract",
+          { user_id: this.address }
+        );
+        const now = moment()
+          .format("YYYY-MM-DD HH:mm:ss")
+          .toString();
 
-        // console.log(this.fromToken.contract)
-        // console.log(this.toToken.contract)
-
-        const hashes = []
-
-        if (this.fromToken.contract === "near" && this.toToken.contract === "wrap.near") {
-          // console.log("withdraw", this.amount)
-          // console.log(utils.format.parseNearAmount(String(this.amount)))
-          try {
-            const result = await account.functionCall({
-              contractId: "wrap.near",
-              methodName: "near_deposit",
-              args: {},
-              gas: "300000000000000",
-              attachedDeposit: utils.format.parseNearAmount(String(this.amount))
-            });
-
-            const hash = !result?.transaction.hash ? result : result?.transaction.hash;
-
-            if (!hash) {
-              this.$router.push({ path: '/withdraw-error'})
-            }
-
-            const item = {
-              hash,
-              method: "near_deposit"
-            }
-
-            hashes.push(item)
-          } catch (error) {
-            this.$router.push({ path: '/withdraw-error'})
-          }
-          
-        } else if (this.fromToken.contract === "wrap.near" && this.toToken.contract === "near") {
-          // console.log("withdraw", this.amount)
-          try {
-            const result = await account.functionCall({
-              contractId: "wrap.near",
-              methodName: "near_withdraw",
-              args: {
-                amount: utils.format.parseNearAmount(String(this.amount))
-              },
-              gas: "300000000000000",
-              attachedDeposit: "1"
-            });
-
-            const hash = !result?.transaction.hash ? result : result?.transaction.hash;
-
-            if (!hash) {
-              this.$router.push({ path: '/withdraw-error'})
-            }
-
-            const item = {
-              hash,
-              method: "near_withdraw"
-            }
-
-            hashes.push(item)
-          } catch (error) {
-            this.$router.push({ path: '/withdraw-error'})
-          }
-
-          
-        } else {
-          try {
-            for (const tx of this.priceRoute) {
-              for (const functionCall of tx.functionCalls) {
-                const result = await account.functionCall({
-                  contractId: tx.receiverId,
-                  methodName: functionCall.methodName,
-                  args: functionCall.args,
-                  gas: functionCall.gas,
-                  attachedDeposit: functionCall.amount
-                });
-
-                const hash = !result?.transaction.hash ? result : result?.transaction.hash;
-
-                if (!hash) {
-                  this.$router.push({ path: '/withdraw-error'})
-                }
-
-                const item = {
-                  hash,
-                  method: functionCall.methodName
-                }
-
-                hashes.push(item)
-              }
-            }
-          } catch (error) {
-            this.$router.push({ path: '/withdraw-error'})
+        if (this.subcontract === null) {
+          this.subcontract = { contract: `${this.address.split(".")[0]}.${CONTRACT_NAME}` };
+          const createSubCobtractUser = await account.functionCall({
+            contractId: CONTRACT_NAME,
+            methodName: "create_subcontract_user",
+            gas: "80000000000000",
+            args: { subaccount_id: this.subcontract.contract, asset: "USDT" },
+            attachedDeposit: "1"
+          });
+          // console.log(createSubCobtractUser)
+          if (!createSubCobtractUser || createSubCobtractUser.status.SuccessValue !== "") {
+            // console.log("error al crear subcontrato");
+            this.btnLoading = false;
+            return
           }
         }
 
-        // console.log("hashes", hashes)
+        const getTokenActivo = await account.viewFunctionV1(
+          CONTRACT_NAME,
+          "get_token_activo",
+          { user_id: this.subcontract.contract, ft_token: "USDT" }
+        );
+        if (!getTokenActivo) {
+          const activarSubcuenta = await account.functionCall({
+            contractId: CONTRACT_NAME,
+            methodName: "activar_subcuenta_ft",
+            args: { subaccount_id: this.subcontract.contract, asset: "USDT" },
+            attachedDeposit: "100000000000000000000000"
+          });
 
-        const dataItem = {
-          from: this.fromToken.icon,
-          to: this.toToken.icon,
-          amount: this.amount,
-          receive: this.amountReceive,
-          hashes
+          if (!activarSubcuenta || !activarSubcuenta.status.SuccessValue !== "") {
+            console.log("Subcuenta ya activa, procede con el siguiente paso");
+          }
         }
 
-        const data = this.encrypt(JSON.stringify(dataItem), "123456")
+        const ftTransfer = await account.functionCall({
+          contractId: CONTRACT_NAME_USDT,
+          methodName: "ft_transfer",
+          gas: "80000000000000",
+          args: { receiver_id: this.subcontract.contract, amount: orderAmount },
+          attachedDeposit: "1"
+        });
+        if (!ftTransfer || ftTransfer.status.SuccessValue !== "") {
+          // console.log("error al transferir token");
+          this.btnLoading = false;
+          return
+        }
+        const acceptOffer = await account.functionCall({
+          contractId: CONTRACT_NAME,
+          methodName: "accept_offer",
+          gas: "300000000000000",
+          args: {
+            offer_type: 1,
+            offer_id: parseInt(this.filteredOffers.id),
+            amount: orderAmount,
+            payment_method: parseInt(filteredPaymentMethod.payment_method_id),
+            datetime: now,
+            rate: parseFloat(this.filteredOffers.exchange_rate)
+          },
+          attachedDeposit: "1"
+        });
 
-        this.$router.push({ path: '/withdraw-complete', query: { data }})
+        if (!acceptOffer || acceptOffer.status.SuccessValue !== "") {
+          // console.log("error al aceptar la oferta", acceptOffer);
+          this.btnLoading = false;
+          return
+        }
       } catch (error) {
-        console.error(error)
+        this.subcontract = {};
+        this.btnLoading = false;
+        console.error(error.message);
+        return;
       }
+
+
+      this.btnLoading = false;
+      this.$router.push({ path: "/trades-pending" });
     },
-    encrypt(text, secret) {
-      const ciphertext = cryptoJS.AES.encrypt(JSON.stringify({ text }), secret).toString();
-      return ciphertext
-    }
-  },
-}
+    async initContractNEAR() {
+      this.btnLoading = true;
+      const CONTRACT_NAME = process.env.VUE_APP_CONTRACT_NAME;
+      /**
+       * Converts the withdrawal amount to the appropriate format based on the token symbol.
+       * If the token symbol is "NEAR", the amount is multiplied by 1e24.
+       * If the token symbol is not "NEAR", the amount is multiplied by 1e6.
+       */
+      const orderAmount = this.tokenSymbol === "NEAR" ? this.NEARyoctoNEAR(this.amount) : (this.amount * 1e6).toString();
+
+      // Filtering the list by payment method and the highest exchange rate
+      // and the remaining amount is greater than the order amount
+      this.filteredOffers = this.listOffers
+        .filter(offer => offer.payment_method.some(method => method.payment_method === this.selectedPayment))
+        .filter(offer => parseFloat(offer.remaining_amount) >= parseFloat(orderAmount))
+        .filter(offer => parseFloat(offer.min_limit) <= parseFloat(orderAmount))
+        .sort((a, b) => b.exchange_rate - a.exchange_rate)
+        .find(() => true);
+      const lowestMinAmount = Math.min(...this.listOffers.map(offer => offer.min_limit));
+      if (!this.filteredOffers) {
+        const lowestMinAmountFormated = this.tokenSymbol === "NEAR" ? this.yoctoNEARNEAR(lowestMinAmount) : lowestMinAmount / 1e6;
+        this.modalNoMessage = "No hay ofertas disponibles, busque un monto superior a " + lowestMinAmountFormated;
+        this.modalNoOffers = true;
+        this.btnLoading = false;
+        return;
+      }
+      // Filter paymet method as per selected payment
+      const filteredPaymentMethod = this.filteredOffers.payment_method.find(method => method.payment_method === this.selectedPayment);
+
+      const account = await walletUtils.nearConnection();
+
+      try {
+        this.subcontract = await account.viewFunctionV1(
+          CONTRACT_NAME,
+          "get_subcontract",
+          { user_id: this.address }
+        );
+
+        const vldeposit = "100000000000000000000000";
+
+        const now = moment()
+          .format("YYYY-MM-DD HH:mm:ss")
+          .toString();
+        if (this.subcontract === null) {
+          this.subcontract = { contract: `${this.address.split(".")[0]}.${CONTRACT_NAME}` };;
+          const createSubCobtractUser = await account.functionCall({
+            contractId: CONTRACT_NAME,
+            methodName: "create_subcontract_user",
+            gas: "80000000000000",
+            args: {},
+            attachedDeposit: vldeposit
+          });
+          // console.log(createSubCobtractUser)
+          if (!createSubCobtractUser || createSubCobtractUser.status.SuccessValue !== "") {
+            // console.log("error al crear subcontrato");
+            this.btnLoading = false;
+            return
+          }
+        }
+
+
+        const ftTransfer = await account.functionCall({
+          contractId: CONTRACT_NAME,
+          methodName: "deposit",
+          gas: "300000000000000",
+          args: { sub_contract: this.subcontract.contract },
+          attachedDeposit: orderAmount
+        });
+
+        if (!ftTransfer || ftTransfer.status.SuccessValue !== "") {
+          // console.log("error al transferir token");
+          this.btnLoading = false;
+          return
+        }
+
+        const acceptOffer = await account.functionCall({
+          contractId: CONTRACT_NAME,
+          methodName: "accept_offer",
+          gas: "300000000000000",
+          args: {
+            offer_type: 1,
+            offer_id: parseInt(this.filteredOffers.id),
+            amount: orderAmount,
+            payment_method: parseInt(filteredPaymentMethod.payment_method_id),
+            datetime: now,
+            rate: parseFloat(this.filteredOffers.exchange_rate)
+          },
+          attachedDeposit: "1"
+        });
+
+        if (!acceptOffer || acceptOffer.status.SuccessValue !== "") {
+          // console.log("error al aceptar la oferta", acceptOffer);
+          this.btnLoading = false;
+          return
+        }
+      } catch (error) {
+        this.subcontract = {};
+        this.btnLoading = false;
+        console.error(error.message);
+        return;
+      }
+      this.btnLoading = false;
+      this.$router.push({ path: "/trades-pending" });
+    },
+    yoctoNEARNEAR(yoctoNEAR) {
+      const amountInNEAR = utils.format.formatNearAmount(yoctoNEAR);
+      // console.log(amountInNEAR);
+      return amountInNEAR.toString();
+    },
+    NEARyoctoNEAR(NEARyocto) {
+      const amountInYocto = utils.format.parseNearAmount(NEARyocto);
+      // console.log('',amountInYocto);
+      return amountInYocto.toString();
+    },
+    },
+};
 </script>
 
 <style src="@/assets/styles/pages/deposit.scss" lang="scss"></style>

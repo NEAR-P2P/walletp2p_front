@@ -1,12 +1,17 @@
 <template>
   <div id="login" class="divcol center">
+    <div v-for="n in 3" :key="n" :class="`ball-decoration-${n}`" />
+
     <Header
       ref="header"
       :show-back-btn="false"
-      top-text="INICIAR LA AVENTURA"
       description="INICIAR SESIÓN O REGÍSTRESE PARA UNIRTE A LA DIVERSIÓN"
       max-width="251px"
-    ></Header>
+    >
+      <template #top-text>
+        <img src="@/assets/sources/logos/logotype.svg" alt="logo icon" class="mx-auto" style="width: 200px;">
+      </template>
+    </Header>
 
 
     <section id="login-content">
@@ -47,6 +52,7 @@
 
 export default {
   name: "CreateImportPage",
+  layout: "auth-layout",
   // middleware: ["authenticated-process-login"],
   data() {
     return {

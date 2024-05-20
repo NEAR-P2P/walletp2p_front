@@ -17,40 +17,43 @@
     </aside>
 
 
-    <v-card class="payments-card">
+    <v-card class="payment-card">
       <div
         v-if="loading"
-        class="payments-card__wrapper"
+        class="payment-card__wrapper"
         style="text-align: center;"
       >
       Cargando....
       </div>
       <div
         v-else
-        class="payments-card__wrapper"
+        class="payment-card__wrapper"
       >
-        <v-card
-          v-for="(item, i) in dataTokensFinal" :key="i"
+        <v-list>
+          <v-list-item
+            v-for="(payment, i) in dataPayments" :key="i"
+            @click="selectedPayment = payment.payment_method"
+          >
+            {{ payment.payment_method }}
+            <img v-if="selectedPayment == payment.payment_method" src="@/assets/sources/icons/checked.svg" alt="checked icon">
+            <img v-else src="@/assets/sources/icons/circle.svg" alt="circle icon">
+          </v-list-item>
+        </v-list>
+        <!-- <v-card
+          v-for="(item, i) in dataPayments" :key="i"
           color="transparent"
-          class="payments-card-coin space"
+          class="payment-card-coin space"
           @click="onSelected(item)"
-        >
-          <div class="center" style="gap: 14px;">
-            <v-img-load
-              :src="item.icon"
-              :alt="`${item.name}s' coin`"
-              sizes="29px"
-              cover
-            />
+        > -->
+          <!-- <div class="center" style="gap: 14px;">
+            <h5 class="mb-0">{{ item.payment_method }}</h5>
+          </div> -->
 
-            <h5 class="mb-0">{{ item.name }}</h5>
-          </div>
-
-          <div class="d-flex flex-column">
+          <!-- <div class="d-flex flex-column">
             <span>{{ item.balance }} {{ item.coin }}</span>
             <span>${{ item.balance_usd }}</span>
-          </div>
-        </v-card>
+          </div> -->
+        <!-- </v-card> -->
       </div>
     </v-card>
   </v-dialog>
@@ -61,9 +64,9 @@ import axios from 'axios';
 import tokens from '@/services/tokens';
 
 export default {
-  name: "ModalCryptos",
+  name: "ModalPayment",
   props: {
-    dataTokens: {
+    dataPayments: {
       type: Array,
       default: undefined,
     }
@@ -74,6 +77,7 @@ export default {
       search: '',
       selectedCoin: undefined,
       loading: false,
+      selectedPayment: "",
       tokensData: [],
       dataTokensFinal: [
         // {
@@ -225,108 +229,4 @@ export default {
 }
 </script>
 
-<style lang="scss">
-.modal-payments {
-
-  .v-input {
-    flex-grow: 1;
-    transform-origin: right;
-    max-width: 31px !important;
-
-    transition: .3s cubic-bezier(0.86, 0, 0.07, 1);
-
-    &__slot {
-      min-height: 31px !important;
-      outline: none !important;
-    }
-
-    .v-input__append-inner img {
-      transform: translateX(-8px);
-      transition: transform .3s ease;
-    }
-
-    &--is-focused {
-      max-width: 100% !important;
-      
-      .v-input__append-inner img { transform: translateX(0) }
-    }
-  }
-
-
-  .payments-card {
-    --height: 600px;
-    --padding-block: 29px;
-
-    width: 317px;
-    max-height: var(--height);
-    border-radius: 20px;
-    border: 1px solid #000;
-    background-color: #F6F6F7 !important;
-    padding-block: var(--padding-block);
-    padding-right: 2px;
-
-    .payments-card__wrapper {
-      display: flex;
-      flex-direction: column;
-      scrollbar-gutter: stable;
-      max-height: calc(var(--height) - var(--padding-block) * 2);
-      padding-left: 10px;
-      border-radius: 0 !important;
-      overflow-y: auto;
-    }
-
-    
-    &-coin {
-      --padding-inline: 20px;
-
-      padding-inline: var(--padding-inline);
-      padding-block: 16px;
-      position: relative;
-
-      &::after {
-        content: '';
-        position: absolute;
-        inset: auto 0 0 0;
-        margin-inline: auto;
-        height: 1px;
-        width: calc(100% - var(--padding-inline) * 2);
-        background-color: var(--secondary);
-      }
-
-      /* &.active {
-        background-color: hsl(216 99% 52% / .7) !important;
-        &::after { background-color: #333 !important }
-
-        * { color: #fff !important }
-      } */
-    }
-
-    
-    h5 {
-      --fw: 700;
-      --fs: 12px;
-      color: #000;
-      font-family: var(--font2);
-      line-height: normal;
-    }
-
-    span:first-child {
-      --fw: 700;
-      color: #000;
-      text-align: right;
-      font-size: 12px;
-      font-family: var(--font2);
-      line-height: normal;
-
-      + span {
-        --fw: 400;
-        color: #333;
-        text-align: right;
-        font-family: var(--font2);
-        font-size: 10px;
-        line-height: normal;
-      }
-    }
-  }
-}
-</style>
+<style lang="scss" src="@/assets/styles/components/payments.scss"></style>

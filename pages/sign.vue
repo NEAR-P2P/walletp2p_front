@@ -149,14 +149,10 @@
 </template>
 
 <script>
-// import * as nearAPI from "near-api-js";
 import moment from 'moment';
 // import {functionCall} from 'near-api-js/lib/transaction'
 import BN from 'bn.js';
 import * as nearAPI from "near-api-js";
-// import { baseDecode } from 'near-api-js/lib/utils/serialize';
-// import { PublicKey } from 'near-api-js/lib/utils';
-// import { createTransaction /* , functionCall */ } from 'near-api-js/lib/transaction'
 import utiles from '../services/utils';
 import encryp from '../services/encryp';
 import { WalletError } from '../utils/walletError'
@@ -167,20 +163,17 @@ import { configNear }  from '~/services/nearConfig';
 import walletUtils from '@/services/wallet';
 import { ALERT_TYPE } from '~/plugins/dictionary';
 
-// const nearAPI = require('near-api-js');
-
-
 // const nearAPI = require("near-api-js");
 // const { KeyPair, keyStores, connect, WalletConnection, transactions, Account } = nearAPI;
+
+
 const { utils, transactions } = nearAPI;
 
 
 
-
-
 export default {
-  name: "LimitedPermissions",
-  layout: "default-variant-2",
+  name: "SignApproveTransaction",
+  layout: "default-variant",
   middleware: ["authenticated"],
   data() {
     return {
@@ -204,8 +197,8 @@ export default {
       contentClass: {
       type: String,
       default: '',
-      loginNear: false
-      },
+      loginNear: false,
+    },
     };
   },
   head() {
@@ -215,6 +208,14 @@ export default {
     };
   },
   created() {
+    /* if(this.$route.query.token){
+      // const tokenString = window.atob(this.$route.query.token);
+      const tokenString = encryp.decryp(this.$route.query.token);
+      const tokenJSON = JSON.parse(tokenString);
+      // sessionStorage.setItem("token", tokenString);
+      this.token = tokenJSON
+    } */
+
     if(this.$route.query.token){
       // const tokenString = window.atob(this.$route.query.token);
       const tokenString = encryp.decryp(this.$route.query.token);
@@ -232,9 +233,9 @@ export default {
                 .reduce((totalAmount, amount) => totalAmount.add(new BN(amount)), new BN(0)).toString();
       
       
-                console.log(transactionsList, transactionsList[0])
+      // console.log(transactionsList, transactionsList[0])
 
-      this.token.from = transactionsList[0].signerId;
+      this.token.from = localStorageUser.getCurrentAccount().address // transactionsList[0].signerId;
       this.token.json = { attachedDeposit: totalAmount };
       this.attachedDeposit = totalAmount;
       this.token.transaction = transactionsList;
@@ -246,8 +247,10 @@ export default {
     }
   },
   mounted() {
+    // this.token = JSON.parse(sessionStorage.getItem("token"));
     this.loadData();
-    
+    const route = JSON.stringify({ path: "/sign", query: this.$route.query});
+    sessionStorage.setItem("route-after-unlocking", route);
   },
   methods: {
     async loadData(){
@@ -314,7 +317,7 @@ export default {
           return
         }
 
-        const dataUser = localStorageUser.getAccount(this.token.from);
+        const dataUser = localStorageUser.getCurrentAccount();
         const privateKey = dataUser.privateKey;
         const address = dataUser.address;
         
@@ -374,6 +377,7 @@ export default {
         location.replace(rute);
         
       } catch (error) {
+        console.log(error)
         this.loading = false
         this.$alert(ALERT_TYPE.ERROR, { desc: error.toString() })
         // console.log("error error: ", error.toString());
@@ -381,8 +385,6 @@ export default {
     },
 
     async approvedMeta() {
-      console.log("paso aqui: ", this.token.json)
-      
       try {
         this.loading = true
         if(Number(this.balance) < Number(this.attachedDeposit)) {
@@ -402,7 +404,7 @@ export default {
         await keyStore.setKey(process.env.Network, address, keyPairNew);
         const near = await nearAPI.connect(configNear(keyStore));
         const account = await near.account(address);
-        
+
         let response
         if(!Array.isArray(this.token?.json)) {
           response = await account.functionCall(this.token.json);
@@ -415,7 +417,7 @@ export default {
                 new BN((!item?.attachedDeposit ? "0" : item.attachedDeposit))
               )
             });
-            
+
           response = await account.signAndSendTransaction({ receiverId: this.token?.json[0]?.contractId, actions});
 
         }
@@ -459,244 +461,22 @@ export default {
       }
       catch (error) {
         this.loading = false
-        console.log(error)
         this.$alert(ALERT_TYPE.ERROR, { desc: error.toString() })
         // console.log("error error: ", error.toString());
       }
-      
     },
 
     cancel() {
-      let ruta = this.token.error;
+      const ruta = this.token.error;
         
-      if(this.token?.searchError) {
+      /* if(this.token?.searchError) {
         ruta += this.token.searchError;
-      }
+      } */
       location.replace(ruta);
     },
   },
     
 }
-
-/*
-async initContract() {
-				//Verifying if the user has token activo
-				let txs = [];
-				const CONTRACT_NAME = process.env.VUE_APP_CONTRACT_NAME;
-				const CONTRACT_NAME_USDT = process.env.VUE_APP_CONTRACT_NAME_USDT;
-				const near = await connect(
-					CONFIG(new keyStores.BrowserLocalStorageKeyStore(), localStorage.getItem("wallet"))
-				);
-				const wallet = new WalletConnection(near);
-				const contract = new Contract(wallet.account(), CONTRACT_NAME, {
-					viewMethods: ["get_token_activo"],
-					changeMethods: [""],
-					sender: wallet.account()
-				});
-				//Info to set mail address
-				this.$apollo
-					.watchQuery({
-						query: mails,
-						variables: {
-							owner_id: this.$session.get("owner_id")
-						}
-					})
-					.subscribe(({data}) => {
-						this.$session.set(
-							"user_mail",
-							data.datausers[0].email === null
-								? "xxx"
-								: data.datausers[0].email
-						);
-					});
-				// eslint-disable-next-line no-unused-vars
-				var vldeposit = "100000000000000000000000";
-				var get_token_activo = await contract.get_token_activo({
-					user_id: this.typeoffer == "sell" ? this.userInfo.split(".")[0] + "." + CONTRACT_NAME : this.userInfo,
-					ft_token: "USDT"
-				});
-				if (get_token_activo == true) {
-					vldeposit = "1";
-				} else {
-					vldeposit = "100000000000000000000000";
-					txs.push({
-						receiverId: CONTRACT_NAME,
-						functionCalls: [
-							{
-								methodName: "activar_subcuenta_ft",
-								receiverId: CONTRACT_NAME,
-								gas: "80000000000000",
-								args: {subaccount_id: this.typeoffer == "sell" ? this.userInfo.split(".")[0] + "." + CONTRACT_NAME : this.userInfo, asset: "USDT"},
-								deposit: "100000000000000000000000"
-							}
-							]
-						});
-				}
-				var now = moment()
-					.format("YYYY-MM-DD HH:mm:ss")
-					.toString();
-				if (this.typeoffer == "sell" && this.subcontract == false) {
-					txs.push(
-						{
-							//Deploy contract
-							receiverId: CONTRACT_NAME,
-							functionCalls: [
-								{
-									methodName: "create_subcontract_user",
-									receiverId: CONTRACT_NAME,
-									gas: "80000000000000",
-									args: {},
-									deposit: vldeposit
-								}
-							]
-						});
-						txs.push({
-							//Send Near
-							receiverId: CONTRACT_NAME_USDT,
-							functionCalls: [
-								{
-									methodName: "ft_transfer",
-									receiverId: CONTRACT_NAME_USDT,
-									gas: "80000000000000",
-									args: {
-										receiver_id: this.userInfo.split(".")[0] + "." + CONTRACT_NAME,
-											//this.userInfo.split(".")[0] + "." + CONTRACT_NAME,
-											
-										amount: this.$session.get("totalremaining_amount").toString()
-									},
-									deposit: 1
-								}
-							]
-						});
-						txs.push({
-							//Accept Order
-							receiverId: CONTRACT_NAME,
-							functionCalls: [
-								{
-									methodName: "accept_offer",
-									receiverId: CONTRACT_NAME,
-									gas: "300000000000000",
-									args: {
-										offer_type: parseInt(this.$session.get("offer_type")),
-										offer_id: parseInt(this.$session.get("offer_id")),
-										amount: this.$session.get("totalremaining_amount").toString(),
-										payment_method: parseInt(
-											this.$session.get("payment_method")
-										),
-										datetime: now,
-										rate: parseFloat(this.$session.get("price"))
-									},
-									deposit: "1"
-								}
-							]
-						});
-					
-				} 
-				else if (this.typeoffer == "sell" && this.subcontract == true) 
-				{
-					txs.push(
-						{
-							//Send Near
-							receiverId: CONTRACT_NAME_USDT,
-							functionCalls: [
-								{
-									methodName: "ft_transfer",
-									receiverId: CONTRACT_NAME_USDT,
-									gas: "80000000000000",
-									args: {
-										receiver_id:
-											this.userInfo.split(".")[0]+ "." + CONTRACT_NAME,
-										amount: this.$session.get("totalremaining_amount").toString()
-									},
-									deposit: "1"
-								}
-							]
-						});
-						txs.push({
-							//Accept Order
-							receiverId: CONTRACT_NAME,
-							functionCalls: [
-								{
-									methodName: "accept_offer",
-									receiverId: CONTRACT_NAME,
-									gas: "300000000000000",
-									args: {
-										offer_type: parseInt(this.$session.get("offer_type")),
-										offer_id: parseInt(this.$session.get("offer_id")),
-										amount: this.$session.get("totalremaining_amount").toString(),
-										payment_method: parseInt(
-											this.$session.get("payment_method")
-										),
-										datetime: now,
-										rate: parseFloat(this.$session.get("price"))
-									},
-									deposit: "1"
-								}
-							]
-						});
-					
-				} 
-				else 
-				{
-					txs.push(
-						{
-							//Accept Order
-							receiverId: CONTRACT_NAME,
-							functionCalls: [
-								{
-									methodName: "accept_offer",
-									receiverId: CONTRACT_NAME,
-									gas: "300000000000000",
-									args: {
-										offer_type: parseInt(this.$session.get("offer_type")),
-										offer_id: parseInt(this.$session.get("offer_id")),
-										amount: this.$session.get("totalremaining_amount").toString(),
-										payment_method: parseInt(
-											this.$session.get("payment_method")
-										),
-										datetime: now,
-										rate: parseFloat(this.$session.get("price"))
-									},
-									deposit: "1"
-								}
-							]
-						});
-				}
-				//console.log(txs)
-				this.batchTransaction(txs, { meta: "USDT" });
-			}
-		}
-	};
-
-  //Batch transactions
-			async batchTransaction(transactions, options) {
-				const near = await connect(
-					CONFIG(new keyStores.BrowserLocalStorageKeyStore(), localStorage.getItem("wallet"))
-				);
-				const wallet = new WalletConnection(near);
-				const nearTransactions = await Promise.all(
-					transactions.map(async tx => {
-						return await this.createTransactionFn(
-							tx.receiverId,
-							tx.functionCalls.map(fc => {
-								return functionCall(fc.methodName, fc.args, fc.gas, fc.deposit);
-							})
-						);
-					})
-				);
-				wallet.requestSignTransactions({
-					transactions: nearTransactions,
-					callbackUrl: options?.callbackUrl,
-					meta: options?.meta
-				});
-			},
-*/
-
 </script>
 
 <style src="@/assets/styles/pages/approve-transaction.scss" lang="scss"></style>
-
-
-
-
-

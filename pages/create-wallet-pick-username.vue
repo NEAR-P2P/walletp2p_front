@@ -22,10 +22,9 @@
         :suffix="dominioNearInput"
         :rules="required"
         @keyup="verificarAccount(accountNear)"
-        @keydown="evt => {
-                  (['ArrowLeft', 'ArrowRight', 'Backspace', 'Delete'].includes(evt.key) ? false : !(/^[a-z0-9_-]+$/.test(evt.key)) ) && evt.preventDefault()
-                }"
+        
       ></v-text-field>
+      <h7 class="mb-4"><strong>Nota:</strong> los unicos caracteres especiales permitidos son guion (-) y guion bajo (_)</h7>
       <!--<p>The following wallet </p>
       <p> 
         <strong>{{ address.substring(0, 20) }} ... {{ address.substring(20, 37) }}</strong> 
@@ -60,9 +59,7 @@
     </section>
 
     <Footer ref="footer">
-      <span class="text" style="--text: var(--text2)">¿NECESITAS AYUDA?
-        <a style="--fw: 700" href="#" target="_blank">SOPORTE</a>
-      </span>
+      <img src="@/assets/sources/logos/logotype.svg" alt="logo icon" class="mx-auto" style="width: 200px">
     </Footer>
 
   </div>
@@ -104,6 +101,13 @@ export default {
       title,
     }
   },
+
+  watch: {
+    accountNear(val) {
+      this.accountNear = val.toLowerCase();
+    }
+  },
+
   created() {
     // this.$store.commit('validSession');
   },
@@ -128,7 +132,6 @@ export default {
       localStorage.setItem("auth", true)
       this.$router.push(this.localePath(utils.routeLogin(this.$route.query.action)));
     },
-
     async verificarAccount(value) {
 
       if(!value) {
@@ -136,7 +139,7 @@ export default {
         this.errorAccount = null
         return false
       }
-
+      
       const accountInput = value + this.dominioNear;
 
       if((/^[a-z0-9_-]+$/.test(value))) {
@@ -164,9 +167,8 @@ export default {
         this.errorAccount = "Valores no permitidos"
         return false
       }
-
-    },
     
+    },
 
     async onCreateName() {
       try {

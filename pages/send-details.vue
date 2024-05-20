@@ -24,11 +24,13 @@
           :rules="required"
           required
           @keyup="verificarAccount(accountNear)"
+          @change="verificarAccount(accountNear)"
         >
           <template #prepend-inner>
             <h5 class="mb-0" style="color: var(--primary)">ENVIAR A</h5>
           </template>
         </v-text-field>
+        <h7 class="mb-4"><strong>Nota:</strong> los unicos caracteres especiales permitidos son punto (.), guion (-) y guion bajo (_)</h7>
 
         <aside class="d-flex" style="gap: 12px">
           <v-btn
@@ -89,7 +91,6 @@ import walletUtils from '@/services/wallet';
 const { keyStores, Account, Near, utils } = nearAPI;
 
 
-
 export default {
   name: "SendDetailsPage",
   data() {
@@ -99,7 +100,7 @@ export default {
       tokenSymbol: "",
       dataToken: null,
       accountNear: null,
-      required: [(v) => !!v || "Campo requerido"],
+      required: [(v) => !!v || "Campo requerido" /*, (v) => this.verificarAccount(v) || "Account already exists" */ ],
       errorAccount: null,
       successAccount: null,
       envioLoading: false,
@@ -135,6 +136,13 @@ export default {
       title,
     }
   },
+
+  watch: {
+    accountNear(val) {
+      this.accountNear = val.toLowerCase();
+    }
+  },
+
   mounted() {
     // localStorage.removeItem("common-beneficiary");
     const data = sessionStorage.getItem("send-json");
@@ -246,9 +254,14 @@ export default {
         }
 
         this.$refs.formEnvio.reset();
+
         sessionStorage.removeItem('allTokenBalances')
+        
+        
 
         this.envioLoading = false;
+
+        
 
         this.$router.push({ path: "/" });
       }
@@ -311,7 +324,7 @@ export default {
           });
           
           if(!storageDepositResult || !storageDepositResult.status?.SuccessValue) {
-            // console.log("error al activar token");
+            console.log("error al activar token");
             return
           }
         }

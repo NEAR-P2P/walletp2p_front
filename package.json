@@ -22,6 +22,7 @@
     "core-js": "^3.19.3",
     "crypto-js": "^4.2.0",
     "firebase": "^10.11.0",
+    "graphql-tag": "^2.12.6",
     "html2canvas": "^1.4.1",
     "moment": "^2.29.4",
     "near-api-js": "^1.1.0",

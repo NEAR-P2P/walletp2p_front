@@ -1,16 +1,15 @@
 <template>
-  <v-form ref="formEmail" v-model="validEmail">
+  <v-form ref="formUser" v-model="validUser">
   <div id="login" class="divcol center">
     <div v-for="n in 3" :key="n" :class="`ball-decoration-${n}`" />
     <Header
       ref="header"
-      top-text="CREAR BILLETERA"
-      description="SELECCIONA TU MEJOR OPCIÓN Y COMIENZA A USAR LA WEB3"
+      top-text="DATOS DE CONTACTO"
+      description="INFORMACIÓN PERSONAL REQUERIDA PARA USAR EL SERVICIO P2P"
       max-width="251px"
     />
 
     <!--<div v-for="i in 3" :id="`login-decoration-${i}`" :key="i" />-->
-    <img src="@/assets/sources/logos/logotype.svg" alt="logo icon" class="mx-auto" style="width: min(100%, 170px);">
 
     <section id="login-content">
       <v-text-field
@@ -18,6 +17,13 @@
         solo label="Correo"
         style="--margin-message: 1px"
         :rules="requiredEmail"
+      ></v-text-field>
+
+      <v-text-field
+        v-model="nameInput"
+        solo label="nombre y apellido"
+        style="--margin-message: 1px"
+        :rules="required"
       ></v-text-field>
 
       <v-text-field
@@ -31,9 +37,9 @@
         class="btn"
         :disable="loading"
         :loading="loading"
-        @click="onContinue('/new-login')"
+        @click="onContinue()"
       >
-        RECIBIR CÓDIGO AL CORREO
+        GUARDAR Y CONTINUAR
       </v-btn>
       <!--<v-btn
         class="btn-outlined"
@@ -95,23 +101,24 @@ import axios from 'axios';
 // import utils from '~/services/utils';
 // import localStorageUser from '~/services/local-storage-user';
 import { ALERT_TYPE } from '~/plugins/dictionary';
+import wallet from '@/services/local-storage-user'
 
 export default {
-  name: "CreateWalletPage",
+  name: "CreateProfile",
   layout: "auth-layout",
-  middleware: ["authenticated-create-import"],
   data() {
     return {
       loading: false,
-      validEmail: false,
+      validUser: false,
       required: [(v) => !!v || "Es requerido"],
       requiredEmail: [(v) => !!v || "Campo requerido", (v) => /.+@.+/.test(v) || 'E-mail inválido'],
       emailImput: null,
       cedulaImput: null,
+      nameInput: null,
     }
   },
   head() {
-    const title = 'Get started';
+    const title = 'User Profile';
     return {
       title,
     }
@@ -126,22 +133,25 @@ export default {
   },
   methods: {
     async onContinue() {
-      if(this.$refs.formEmail.validate()) {
+      if(this.$refs.formUser.validate()) {
         this.loading = true
-        await axios.post(process.env.URL_BACKEND +'/wallet/send-code-verify-email',
-        {email: this.emailImput, cedula: this.cedulaImput}, {
+        await axios.post(process.env.URL_BACKEND +'/wallet/update-wallet',
+        { email: this.emailImput, 
+          cedula: this.cedulaImput, 
+          name: this.nameInput, 
+          walletname: wallet.getCurrentAccount().address,
+        }, {
           headers: {
             'accept': 'application/json',
           },
-        }).then(() => {
+        }).then((response) => {
           this.loading = false
-          sessionStorage.setItem("email", this.emailImput);
-          sessionStorage.setItem("cedula", this.cedulaImput);
           // localStorage.setItem("login", true);
+          console.log(response.data)
           
           // this.$router.push(utils.routeAction(this.$route.query.action,"/create-wallet-verification"));
           
-          this.$router.push({ path: "/create-wallet-verification" });
+          this.$router.push({ path: sessionStorage.getItem("push") });
           // this.$router.push(this.localePath("/verification"))
         }).catch((error) => {
           this.loading = false

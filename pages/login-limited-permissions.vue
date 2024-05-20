@@ -27,7 +27,6 @@
 
 
     <v-card
-      v-if="contract"
       min-height="45"
       class="btn-outlined justify-space-between align-center flex-wrap"
       style="margin-bottom: 12px; padding-right: 15px;"
@@ -95,10 +94,10 @@ export default {
         { text: "Esto no permite que la aplicación transfiera tokens.", check: false },
       ],
       domain: null,
-      contract: undefined,
+      contract: null,
       token: {},
-      address: localStorage.getItem("connectAppAddressSelect"), // sessionStorage.getItem("connectAppAddressSelect"),
-      loginNear: false
+      address: sessionStorage.getItem("connectAppAddressSelect"),
+      loginNear: false,
     }
   },
   head() {
@@ -108,7 +107,21 @@ export default {
       title,
     }
   },
-  mounted() {
+  created() {
+    // const token = sessionStorage.getItem("token");
+    /* let tokenJSON;
+    if(this.$route.query.token){
+      // const tokenString = window.atob(this.$route.query.token);
+      const tokenString = encryp.decryp(this.$route.query.token);
+      tokenJSON = JSON.parse(tokenString);
+      // sessionStorage.setItem("token", tokenString);
+    }
+
+    
+    this.domain = tokenJSON.domain;
+    this.contract = tokenJSON.contract;
+    this.token = tokenJSON; */
+
     if(this.$route.query.token){
       const tokenString = encryp.decryp(this.$route.query.token);
       const tokenJSON = JSON.parse(tokenString);
@@ -117,7 +130,6 @@ export default {
       this.contract = tokenJSON.contract;
       this.token = tokenJSON;
     } else {
-      // console.log(this.$route.query);
       const params = this.$route.query;
        
       this.domain = this.token.domain = this.$route.query?.success_url ? this.$route.query?.success_url.split("/")[2] : null;
@@ -129,11 +141,6 @@ export default {
       this.loginNear = true;
       
     }
-
-    /* this.domain = this.$route.query?.success_url ? this.$route.query?.success_url.split("/")[2] : "";
-    this.contract = "";
-    this.routeCancel = this.$route.query?.success_url; */
-    
   },
   methods: {
     async connect(){
@@ -185,15 +192,68 @@ export default {
       } else {
         ruta += "?token="+token;
         if(this.loginNear) {
-          // const paramsOrigin = ""; // this.$route.query?.success_url.split("?").length > 0 ? "&" : "?"
+
+          const callbackUrl = this.$route.query?.success_url.split('?')
+          let urlParams = "";
+
+          if(callbackUrl.length > 1) {
+            urlParams = new URLSearchParams(callbackUrl[1]);
+            urlParams.delete("transactionHashes");
+            urlParams.delete("transactions");
+            urlParams.delete("token");
+          }
+
+          const urlParamsFinal = urlParams.toString().trim() === "" ? "" : `&${urlParams.toString()}`;
           const publicKeyParam = !this.token?.public_key ? "" : `&public_key=${this.token.public_key}`;
-          ruta =  `${this.$route.query?.success_url}?account_id=${_account.address}${publicKeyParam}&all_keys=${_account.publicKey}`;// this.token.success;
+          ruta = `${callbackUrl[0]}?account_id=${_account.address}${publicKeyParam}&all_keys=${_account.publicKey}${urlParamsFinal}`;// this.token.success;
+
+
+          
+          // const publicKeyParam = !this.token?.public_key ? "" : `&public_key=${this.token.public_key}`;
+          // ruta =  `${this.$route.query?.success_url}?account_id=${_account.address}${publicKeyParam}&all_keys=${_account.publicKey}`;// this.token.success;
         }
       }
       
       location.replace(ruta);
     },
 
+    connect2(){
+      if (!this.address || !this.domain) return
+      
+
+      localStorageUser.addApp({
+          _address: this.address, 
+          _contract: this.domain, 
+          _domain: this.domain
+      });
+
+      const account = localStorageUser.getAccount(this.address)
+
+      let ruta = this.token.success;
+      const json = JSON.stringify({
+        wallet: account.address,
+        cretaDate: new Date(),
+        email: account.email,
+        privateKey: account.privateKey,
+      })
+      const token = window.btoa(json)
+      
+      // sessionStorage.removeItem("token");
+      // sessionStorage.removeItem("connectAppAddressSelect")
+      
+      // const paramsOrigin = this.$route.query?.success_url.split("?").length > 0 ? "&" : "?"
+      // const ruta =  `${this.$route.query?.success_url}${paramsOrigin}account_id=${account.address}&all_keys=${account.privateKey}`;// this.token.success;
+
+
+
+      if(this.token?.search) {
+        ruta += this.token.search + "&token="+token;
+      } else {
+        ruta += "?token="+token;
+      }
+      
+      location.replace(ruta);
+    },
     shortenAddress(address) {
       return utils.shortenAddress(address);
     },

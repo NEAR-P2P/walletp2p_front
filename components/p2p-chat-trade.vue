@@ -19,16 +19,16 @@
           </v-btn>
 
           <p class="mb-0 ellipsis-box" :style="`--lines: ${showMoreInfoCard ? 0 : 2}`">{{ infoMessage }}</p>
-          <a @click="showMoreInfoCard = !showMoreInfoCard">SEE {{ showMoreInfoCard ? 'LESS' : 'MORE' }} <v-icon size="16">mdi-chevron-right</v-icon></a>
+          <a @click="showMoreInfoCard = !showMoreInfoCard">VER {{ showMoreInfoCard ? 'MENOS' : 'MAS' }} <v-icon size="16">mdi-chevron-right</v-icon></a>
         </v-card>
 
         <div
-          v-for="(msg, i) in messages" v-show="msg.text || msg.name || msg.src" :key="i"
+          v-for="(msg, i) in messages" v-show="msg?.text || msg?.name || msg?.src" :key="i"
           :class="['message', getMessageType(msg.authorId)]"
         >
           <div class="message__content">
             <!-- avatar -->
-            <template v-if="msg.authorId !== uid && isLastMessageGroup(msg.authorId, i) && getRoomUser(msg.authorId).avatar">
+            <!-- <template v-if="msg.authorId !== uid && isLastMessageGroup(msg.authorId, i) && getRoomUser(msg.authorId).avatar">
               <v-img-load
                 v-if="msg.authorId === MessageSpecialId.operator"
                 :src="require('@/assets/sources/logos/logo.svg')"
@@ -49,21 +49,21 @@
                 rounded="50%" cover
                 class="flex-grow-0"
               />
-            </template>
+            </template> -->
 
             <div :class="['message__content-card', msg.type, isLastMessageGroup(msg.authorId, i) ? 'first-bubble' : '']">
               <!-- text message -->
-              <p v-if="msg.type === MessageType.text || msg.authorId === MessageSpecialId.system" v-html="msg.text" />
+              <p v-if="msg.type === MessageType.text || msg.authorId === MessageSpecialId.system" v-html="msg?.text" />
 
               <!-- image message -->
               <v-badge
                 v-else-if="msg.type === MessageType.image"
-                :color="msg.status === MessageStatus.failed ? 'rgb(var(--v-theme-primary))' : 'transparent'"
-                :inline="msg.status === MessageStatus.failed"
+                :color="'transparent'"
+                :inline="false"
               >
                 <template #badge>
                   <span
-                    v-if="msg.status === MessageStatus.failed"
+                    v-if="false"
                     class="bg-primary pa-1 pointer"
                     style="border-radius: 8px;"
                     @click="resendFile(msg, msg.file)"
@@ -75,16 +75,16 @@
                   style="position: relative"
                 >
                   <input type="checkbox" class="message__content-card__image-toggle">
-                  <div :style="`--bg-image: url(${msg.uri})`" />
+                  <div :style="`--bg-image: url(${msg.photoURL})`" />
 
                   <v-progress-circular
-                    v-show="msg.status === MessageStatus.sending"
+                    v-show="false"
                     indeterminate
                     color="rgb(var(--v-theme-secondary))"
                     style="position: absolute"
                   ></v-progress-circular>
 
-                  <img :src="msg.uri" :alt="`image sended by ${getRoomUser(msg.authorId).nickname}`">
+                  <img :src="msg.photoURL" :alt="`image sended by ${getRoomUser(msg.wallet)}`">
                 </div>
               </v-badge>
 
@@ -93,7 +93,7 @@
                 v-else-if="msg.type === MessageType.file"
                 class="message__content-card__file"
                 :class="{loading: msg.status === MessageStatus.sending}"
-                :href="msg.uri"
+                :href="msg.photoURL"
                 download
               >
                 <v-progress-circular
@@ -112,16 +112,24 @@
           <span
             v-if="msg.authorId !== MessageSpecialId.system"
             class="message-date"
-          >{{ getHours(msg.createdAt) }}</span>
+          ><p style="font-weight: bold; margin-bottom: -1px;">{{ msg.wallet }}</p> {{ getHours(msg.createdAt) }}</span>
         </div>
+        <div ref="scrollable"></div>
       </section>
 
 
       <form @submit.prevent="sendMessage">
+        <div
+          v-if="photo"
+          class="photo-preview"
+          :style="{ 'background-image': `url(${messagePhoto})` }"
+          @click="photo = null"
+        ></div>
+
         <input
           v-model="message"
           type="text"
-          placeholder="MESSAGE"
+          placeholder="MENSAJE"
         />
         
         <button
@@ -130,10 +138,10 @@
           class="button"
           style="border-radius: 0"
           :class="{ 'is-loading': isLoadingFile }"
-          @click="file.click()"
+          @click="$refs.file.click()"
         >
           <v-icon>mdi-paperclip</v-icon>
-          <input ref="file" type="file" class="inputfile d-none" @change="event => onFileChange(event.target.files[0])" />
+          <input ref="file" type="file" class="inputfile d-none" accept=".jpg,.jpeg,.png" @change="event => onFileChange(event.target.files[0])" />
         </button>
 
         <button :disabled="!message" style="padding-right: 5px" @click="sendMessage">
@@ -145,10 +153,15 @@
 </template>
 
 <script>
-import { Timestamp } from 'firebase/firestore'
-import { timeOf } from '@/plugins/functions'
+import firebase from "firebase/compat/app";
+import moment from "moment"
+import { Timestamp, collection, query, where, getDocs, doc, onSnapshot, orderBy } from 'firebase/firestore'
+// import { timeOf } from '@/plugins/functions'
+import { db } from "@/plugins/firebase";
+import wallet from '@/services/local-storage-user'
 import { MessageModel, MessageSpecialId, MessageStatus, MessageType } from '~/models/message_model'
 import { RoomUserInfo } from '~/models/p2p_user_model'
+
 
 export default {
   props: {
@@ -162,7 +175,7 @@ export default {
     },
     height: {
       type: String,
-      default: "450px",
+      default: window.innerHeight > 970 ? "550px" : "450px",
     },
     textActionButton: {
       type: String,
@@ -171,6 +184,9 @@ export default {
   },
   data() {
     return {
+      photo: null,
+      orderId: sessionStorage.getItem("orderId"),
+      operation: sessionStorage.getItem("operation"),
       MessageSpecialId,
       MessageType,
       uid: "2",
@@ -183,21 +199,319 @@ export default {
       isLoadingFile: false,
       showInfoCard: false,
       showMoreInfoCard: false,
-      infoMessage: "We recommend that you try to choose verified merchants, not reasdasd laksdñl aksñl dkasñl kdñlaskñs asd as das das a asd asd as d asdasdasda",
-
+      infoMessage: "Los Mercantes de este P2P express son verificados y con KYC previo, si Ud. por alguna razón no se siente seguro, puede cancelar la operación en cualquier momento, o iniciar una disputa.",
+      terms: sessionStorage.getItem("terms"),
       chat: null,
       file: null,
+      unreadMessagesCount: 0,
+      polling: null,
+      unsubscribe: null,
     }
+  },
+  computed: {
+    messagePhoto() {
+      return URL.createObjectURL(this.photo);
+    },
   },
   watch: {
     roomId(_) {
-      this.getData()
+      this.getMessages()
     }
   },
+  /* created() {
+    this.readMessages();
+    this.getUnreadMessagesCount();
+  }, */
+
+  beforeDestroy() {
+    clearInterval(this.polling);
+    // Cancela la suscripción a Firestore cuando el componente se destruye
+    if (this.unsubscribe) {
+      this.unsubscribe();
+    }
+
+  },
   mounted() {
-    this.getData()
+    this.getMessages()
+    this.terms = sessionStorage.getItem("terms");
+    this.showInfoCard= true
+    // this.pollData();
+    // this.getMessages()
   },
   methods: {
+    onFileChange(event) {
+      // console.log(event)
+      this.photo = event;
+      // this.$refs.input.focus();
+
+      // event?.preventDefault();
+      if (this.photo) {
+        const timestamp = Date.now();
+        const storageRef = firebase
+          .storage()
+          .ref(`${timestamp}${this.photo.name}`);
+        const uploadTask = storageRef.put(this.photo);
+
+        uploadTask.on('state_changed', 
+          (snapshot) => {
+            // You can use this function to monitor the upload progress
+          }, 
+          (error) => {
+            // Handle unsuccessful uploads
+            console.error(error);
+          }, 
+          () => {
+            // Upload completed successfully, now we can get the download URL
+            uploadTask.snapshot.ref.getDownloadURL().then((url) => {
+              const messageInfo = {
+                authorId: null,
+                wallet: wallet.getCurrentAccount().address,
+                photoURL: url,
+                text: this.message || " ",
+                readed: true,
+                type: MessageType.image,
+                updatedAt: Date.now(),
+                createdAt: Date.now(),
+              }
+
+              db
+                .collection(process.env.VUE_APP_CHAT_FIREBASE)
+                .doc(`${this.operation}${this.orderId}`)
+                .collection("MESSAGES")
+                .add(messageInfo);
+
+              this.getMessages();
+
+              this.message = "";
+              this.photo = null;
+            });
+          }
+        );
+      }
+    },
+    pollData() {
+			this.polling = setInterval(() => {
+        this.getUnreadMessagesCount();
+			}, 5000);
+		},  
+    async markMessageAsRead(messageId) {
+      try {
+        const docRef = db
+          .collection(process.env.VUE_APP_CHAT_FIREBASE)
+          .doc(`${this.operation}${this.orderId}`)
+          .collection("MESSAGES")
+          .doc(messageId);
+
+        await docRef.update({
+          read: true
+        });
+
+        // console.log("Document successfully updated!");
+      } catch (error) {
+        console.error("Error updating document: ", error);
+      }
+    },
+    async getUnreadMessagesCount() {
+      try {
+        const messagesSnapshot = await db
+          .collection(process.env.VUE_APP_CHAT_FIREBASE)
+          .doc(`${this.operation}${this.orderId}`)
+          .collection("MESSAGES")
+          .where("readed", "==", false)
+          .get();
+        // console.log(messagesSnapshot)
+        this.unreadMessagesCount = messagesSnapshot.size;
+        // console.log("unreadMessagesCount", this.unreadMessagesCount)
+      } catch (error) {
+        console.error("Failed to get unread messages count:", error);
+      }
+    }, 
+
+    async readMessages() {
+      const q = query(
+        collection(db, `${process.env.VUE_APP_CHAT_FIREBASE}/${this.operation}${this.orderId}/MESSAGES`),
+        where("wallet", "!=", wallet.getCurrentAccount().address),
+        where("readed", "==", false)
+      );
+
+      const querySnapshot = await getDocs(q);
+
+      const batch = db.batch();
+
+      querySnapshot.forEach((item) => {
+        const docRef = doc(db, `${process.env.VUE_APP_CHAT_FIREBASE}/${this.operation}${this.orderId}/MESSAGES`, item.id);
+        batch.update(docRef, { readed: true });
+      });
+      await batch.commit();
+    },
+
+    getMessages() {
+      // console.log("VUE_APP_CHAT_FIREBASE",process.env.VUE_APP_CHAT_FIREBASE)
+      /* db
+        .collection(process.env.VUE_APP_CHAT_FIREBASE)
+        .doc(`${this.operation}${this.orderId}`)
+        .collection("MESSAGES")
+        .orderBy("createdAt")
+        .onSnapshot((snapshot) => {
+          // const postData = [];
+
+          // console.log("snapshot", snapshot)
+
+          const msgs = [
+            {
+              authorId: "system",
+              createdAt: Date.now(),
+              text: this.terms,
+              type: MessageType.text,
+              updatedAt: Date.now()
+            }
+          ]
+
+          snapshot.forEach((doc) => {
+            const item = { ...doc.data(), id: doc.id};
+            // item.text = !item?.text ? null : item.text.trim() === "" ? null : item.text.trim();
+            if (item.wallet === wallet.getCurrentAccount().address) {
+              item.authorId = "2"
+            } else {
+              item.authorId = "1"
+
+            }
+            // console.log("message", item)
+            
+            msgs.push(item)
+
+            
+            // const item = { ...doc.data(), id: doc.id, active: false };
+            // postData.push(item);
+          });
+
+          this.messages = msgs;
+          
+
+          setTimeout(() =>{
+            // this.$refs.scrollable.scrollIntoView({ behavior: "smooth", block: "end" });
+            this.$refs.scrollable.scrollIntoView({ behavior: "smooth" });
+          }, 1000)
+
+          
+          // console.log(this.messages , "MESSAGES")
+          // this.chat = postData;
+        }); */
+
+        const q = query(
+          collection(db, `${process.env.VUE_APP_CHAT_FIREBASE}/${this.operation}${this.orderId}/MESSAGES`),
+          orderBy("createdAt")
+        );
+
+        // Guarda la función de cancelación de la suscripción en 'unsubscribe'
+        this.unsubscribe = onSnapshot(q, (querySnapshot) => {
+          const msgs = [
+            {
+              authorId: "system",
+              createdAt: Date.now(),
+              text: this.terms,
+              type: MessageType.text,
+              updatedAt: Date.now()
+            }
+          ];
+
+          querySnapshot.forEach((doc) => {
+            const item = { ...doc.data(), id: doc.id};
+            // item.text = !item?.text ? null : item.text.trim() === "" ? null : item.text.trim();
+            if (item.wallet === wallet.getCurrentAccount().address) {
+              item.authorId = "2"
+            } else {
+              item.authorId = "1"
+
+            }
+            
+            msgs.push(item)
+
+          });
+
+          this.messages = msgs;
+          
+
+          setTimeout(() =>{
+            // console.log(this.showInfoCard, this.$refs.scrollable)
+            // this.$refs.scrollable.scrollIntoView({ behavior: "smooth", block: "end" });
+                this.$refs.scrollable.scrollIntoView({ behavior: "smooth" });
+          }, 500)
+
+          this.readMessages();
+
+        });
+
+    },
+    async sendMessage(event) {
+      event.preventDefault();
+      if (this.photo) {
+        const timestamp = Date.now();
+        const storageRef = firebase
+          .storage()
+          .ref(`${timestamp}${this.photo.name}`)
+          .put(this.photo);
+        await storageRef.on(`state_changed`, () => {
+          storageRef.snapshot.ref.getDownloadURL().then(url => {
+            // console.log("url",url)
+            const messageInfo = {
+              authorId: null,
+              wallet: wallet.getCurrentAccount().address,
+              photoURL: url,
+              text: this.message,
+              readed: true,
+              type: MessageType.image,
+              updatedAt: Date.now(),
+              createdAt: Date.now(),
+            }
+
+            // console.log(messageInfo, "HOLAAAA")
+
+            db
+              .collection(process.env.VUE_APP_CHAT_FIREBASE)
+              .doc(`${this.operation}${this.orderId}`)
+              .collection("MESSAGES")
+              .add(messageInfo);
+            // db
+            //   .collection(process.env.VUE_APP_CHAT_FIREBASE || "TESTNET")
+            //   .doc(this.orderId)
+            //   .set({ artist: this.activeChat.artist || "", ago: Date.now() });
+
+            this.getMessages();
+
+            this.message = "";
+            this.photo = null;
+          });
+        });
+      }
+     else if (this.message) {
+        const messageInfo = {
+          authorId: null,
+          wallet: wallet.getCurrentAccount().address,
+          text: this.message,
+          readed: true,
+          type: MessageType.text,
+          updatedAt: Date.now(),
+          createdAt: Date.now(),
+        }
+
+        // console.log(messageInfo)
+
+        db
+          .collection(process.env.VUE_APP_CHAT_FIREBASE)
+          .doc(`${this.operation}${this.orderId}`)
+          .collection("MESSAGES")
+          .add(messageInfo);
+        // db
+        //   .collection(process.env.VUE_APP_CHAT_FIREBASE || "TESTNET")
+        //   .doc(this.orderId)
+        //   .set({ artist: this.activeChat.artist || "", ago: Date.now() });
+
+        this.getMessages();
+
+        this.message = "";
+      }
+    },
     getData() {
       // get room users
       const users = [
@@ -237,7 +551,7 @@ export default {
           authorId: "system",
           createdAt: Timestamp.now(),
           status: MessageStatus.sent,
-          text: "El pedido se procesó exitosamente, espere el pago de su contraparte.",
+          text: this.terms,
           type: MessageType.text,
           updatedAt: Timestamp.now()
         }).toJson(),
@@ -310,7 +624,8 @@ export default {
     },
 
     getHours(time) {
-      return timeOf(time).format("HH:mm")
+      return moment(time).format("HH:mm");
+      // return timeOf(time).format("HH:mm")
     },
 
     isLastMessageGroup(authorId, currentIndex) {
@@ -324,20 +639,20 @@ export default {
       }
     },
         
-    sendMessage() {
-      const msg = this.message
-      this.message = undefined
+    // sendMessage() {
+    //   const msg = this.message
+    //   this.message = undefined
 
-      this.messages.push(new MessageModel({
-        authorId: "2",
-        createdAt: Timestamp.now(),
-        status: MessageStatus.sent,
-        text: msg,
-        type: MessageType.text,
-        updatedAt: Timestamp.now()
-      }).toJson())
-      // this.chat.scrollTop = this.chat.scrollHeight
-    },
+    //   this.messages.push(new MessageModel({
+    //     authorId: "2",
+    //     createdAt: Timestamp.now(),
+    //     status: MessageStatus.sent,
+    //     text: msg,
+    //     type: MessageType.text,
+    //     updatedAt: Timestamp.now()
+    //   }).toJson())
+    //   // this.chat.scrollTop = this.chat.scrollHeight
+    // },
 
     reloadMessages() {
       const saved = Array.of(this.message)
@@ -345,6 +660,7 @@ export default {
       setTimeout(() => { this.message = saved }, 200);
     }
   }
+
 }
 </script>
 

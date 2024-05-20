@@ -1,4 +1,5 @@
 import Vue from 'vue'
+// eslint-disable-next-line import/no-named-as-default
 import vueDebounce from 'vue-debounce'
 
 Vue.use(vueDebounce)

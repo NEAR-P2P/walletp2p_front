@@ -17,11 +17,15 @@ export const state = () => ({
   },
   currentEmailVerification: {
     token: undefined,
-    email: "detextre4@gmail.com",
+    email: "",
   },
+  lockAuth: false,
 });
 
 export const mutations = {
+  setLockAuth(state, value) {
+    state.lockAuth = value
+  },
   emailVerification(state, {token, email}) {
     state.currentEmailVerification.token = token
     state.currentEmailVerification.email = email

@@ -8,8 +8,10 @@
       id="default-layout-background"
       :src="
         require(`~/assets/sources/images/circle${
-          $route.path === '/document-transfer' ? '-bubbles' : ''
+          bgLogo.includes($route.path) ? '-logo'
+          : bgBubbles.includes($route.path) ? '-bubbles' : ''
         }.svg`)"
+      :class="{ opacity: bgOpacity.includes($route.path) }"
       alt="background"
     >
 
@@ -27,11 +29,18 @@
 </template>
 
 <script>
+import localStorageUser from '@/services/local-storage-user';
+
 export default {
   name: "DefaultLayout",
-  // middleware: ['authenticated'],
+  middleware: ['lock-password'],
   data() {
     return {
+      bgBubbles: [
+        '/document-transfer'
+      ],
+      bgOpacity: [],
+      bgLogo: [],
       withoutFooter: [
         "/trades-pending",
         "/trades-chat"
@@ -39,10 +48,17 @@ export default {
     }
   },
   created() {
+    if (!localStorage.getItem('auth')) {
+      this.$router.replace('/create-import')
+      return
+    }
+
     // get data profile
     this.$store.dispatch("getData");
   },
   mounted() {
+    // this.unlockProcess()
+   
     this.scrollX();
     // this.footerHeightListener(); 
     
@@ -53,6 +69,37 @@ export default {
     // window.removeEventListener("resize", this.footerHeightListener);
   },
   methods: {
+    unlockProcess() {
+      if (localStorage.getItem('unlock')) {
+        localStorage.removeItem('unlock')
+        return
+      }
+
+      localStorage.removeItem("privateKey")
+      localStorage.removeItem("publicKey")
+      const address = localStorage.getItem("address")
+
+      if (!address) {
+        return
+      }
+
+      try {
+        const account = localStorageUser.getAccount(address)
+
+        if (account.publicKey.startsWith('ed25519:')) {
+        localStorage.setItem("privateKey", account.privateKey)
+        localStorage.setItem("publicKey", account.publicKey)
+      } else {
+        this.$router.push("/unlock-wallet")
+      }
+      } catch (error) {
+        console.log("ERRRORR")
+        // localStorage.removeItem("address")
+        // localStorage.removeItem("listUser")
+        // localStorage.removeItem("auth")
+        // location.reload()
+      }
+    },
     scrollX() {
       const
         scrollableDesktop = document.querySelectorAll('.scrollx'),

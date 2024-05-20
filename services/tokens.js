@@ -4,7 +4,6 @@ import axios from 'axios';
 // import utils from './utils';
 import walletUtils from '@/services/wallet'
 import localStorageUser from '~/services/local-storage-user';
-
 // const { connect } = nearAPI;
 
 
@@ -27,6 +26,7 @@ function getListContractToken(address) {
     const network = !process.env.Network ? "-testnet" : process.env.Network === "mainnet" ? "" : "-testnet";
     return axios.get(`https://api${network}.nearblocks.io/v1/kitwallet/account/${address}/likelyTokensFromBlock?fromBlockTimestamp=0`)
       .then(response => {
+        if(!response.data?.list) throw new Error("no existe likelyTokensFromBlock");
         return response.data.list
       }).catch(error => {return error}
     );
@@ -41,21 +41,21 @@ const tokenBalanceCache = new Map();
 
 async function getTokenBalance({ contract, address, symbol }) {
   // Check if token price is cached
-  let priceToken = tokenPriceCache.get(symbol);
-  if (!priceToken) {
+  let priceToken; // = tokenPriceCache.get(symbol);
+  // if (!priceToken) {
       const getPrice = await walletUtils.getPrice("USD", symbol);
       if (getPrice) {
           priceToken = getPrice;
           tokenPriceCache.set(symbol, priceToken);
       }
-  }
+  // }
 
   // Check if token balance is cached
   const balanceKey = `${contract}-${address}`;
-  let balanceData = tokenBalanceCache.get(balanceKey);
+  let balanceData;/* tokenBalanceCache.get(balanceKey);
   if (balanceData) {
       return balanceData;
-  }
+  } */
 
   const account = await walletUtils.nearConnection();
   try {
@@ -85,11 +85,11 @@ window.addEventListener("beforeunload", () => {
   sessionStorage.clear();
 });
 
-
 async function getBalanceInitNear(_address) {
-    const balanceNear = await walletUtils.getBalance();
-    return balanceNear.near ? String((balanceNear.near * balanceNear.price).toFixed(2)) : 0;
+  const balanceNear = await walletUtils.getBalance();
+  return balanceNear.near ? String((balanceNear.near * balanceNear.price).toFixed(2)) : 0;
 }
+
 
 /**
  * Retrieves a list of token balances for a given user's address.
@@ -100,6 +100,7 @@ async function getListTokensBalance() {
     try {
       const address = localStorageUser.getCurrentAccount().address;
       const contractFromBlock = await getListContractToken(address);
+
       if (!contractFromBlock) return;
       const listContract = contractFromBlock;
       const list = {
@@ -116,8 +117,8 @@ async function getListTokensBalance() {
        * @returns {Promise<Object>} The NEAR balance data object.
        */
       const nearBalancePromise = async () => {
-        /* let nearBalanceData = sessionStorage.getItem('NEAR');
-        if (nearBalanceData) {
+        // let nearBalanceData = sessionStorage.getItem('NEAR');
+        /* if (nearBalanceData) {
           return JSON.parse(nearBalanceData);
         } else { */
           const balanceNear = await walletUtils.getBalance();
@@ -200,6 +201,8 @@ async function getListTokensBalance() {
 
       sessionStorage.setItem('allTokenBalances', JSON.stringify(allTokenBalances));
 
+      
+
       return list;
     } catch (error) {
       // Handle errors if needed
@@ -258,6 +261,7 @@ async function getInventoryUser() {
   return list
 }
 
+
 async function updateBalanceLocalStorage() {
   const inventory = await getListTokensBalance();
 
@@ -284,6 +288,8 @@ async function updateBalanceLocalStorage() {
   
   return inventory;
 }
+
+
 
 export default {
   getTokenBalance,

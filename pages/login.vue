@@ -96,6 +96,18 @@ export default {
     
     // console.log( this.$route.query.transactions)
     
+    /* if(this.$route.query.token){
+      // const tokenString = window.atob(this.$route.query.token);
+      const tokenString = encryp.decryp(this.$route.query.token);
+      const tokenJSON = JSON.parse(tokenString);
+      // sessionStorage.setItem("token", tokenString);
+      this.token = tokenJSON
+    }
+    
+    this.domain = this.token.domain;
+    this.contract = this.token.contract;
+    this.routeCancel = this.token.success; */
+
     if(this.$route.query.token){
       // const tokenString = window.atob(this.$route.query.token);
       const tokenString = encryp.decryp(this.$route.query.token);
@@ -114,8 +126,6 @@ export default {
       this.routeCancel = params?.failure_url;
       this.token.success = params?.success_url;
     }
-    
-    
 
     try {
       const arrayRes = localStorageUser.getAccounts();
@@ -164,8 +174,6 @@ export default {
       sessionStorage.setItem("create-import-proccess", jsonCreateImportProccess);
       this.$router.push({path: '/import-wallet'});
     },
-
-
     selectAccount(address, array){
       const list = array === undefined ? this.dataWallets : array;
 
@@ -183,21 +191,18 @@ export default {
 
       this.dataWallets = arrayRet;
     },
-
     next() {
-      if(!this.routeCancel) { this.$router.push({ path: "/"}) }
-      
+      if(!this.routeCancel) { this.$router.replace({ path: "/"}) }
+
       if(!this.token) this.$alert(ALERT_TYPE.WARNING, { desc: "no hay token" });
       
       // if (!this.address || !this.domain || !this.contract) {console.log("error"); return}
       
-      // sessionStorage.setItem("connectAppAddressSelect", this.address);
-      localStorage.setItem("connectAppAddressSelect", this.address);
+      sessionStorage.setItem("connectAppAddressSelect", this.address);
       
       this.$router.push({ path: "/login-limited-permissions", query: this.$route.query });
       
     },
-
     cancel() {
       if(this.routeCancel) {
         /* let ruta = this.token.error;
