@@ -5,18 +5,23 @@ const development = process.env.NODE_ENV !== 'production'
 
 export default {
   env: {
-    Network: process.env.Network || 'testnet',
-    baseUrl: process.env.BASE_URL || 'http://localhost:3000',
-    URL_BACKEND: process.env.URL_BACKEND || 'http://localhost:3000',
-    URL_BACKEND_SWAP: process.env.URL_BACKEND_SWAP || 'http://localhost:3000',
-    URL_APIP_PRICE: process.env.URL_APIP_PRICE || 'http://localhost:3000',
-    URL_API_NFT: process.env.URL_API_NFT || 'http://localhost:3000',
-    URL_API_INDEXER: process.env.URL_API_INDEXER || 'http://localhost:3000',
-    CLIEN_ID_GOOGLE: process.env.CLIEN_ID_GOOGLE || 'http://localhost:3000',
-    URL_EXPLORER: process.env.URL_EXPLORER || 'http://localhost:3000',
-    URL_EXPLORER_TXS: process.env.URL_EXPLORER_TXS || 'http://localhost:3000',
-    ROUTER_EXPLORER_NEAR: process.env.ROUTER_EXPLORER_NEAR || 'http://localhost:3000',
-    ROUTER_RPC: process.env.ROUTER_RPC || 'http://localhost:3000',
+    Network: process.env.Network || "testnet",
+    baseUrl: process.env.BASE_URL || "http://localhost:3000",
+    URL_BACKEND: process.env.URL_BACKEND || "http://localhost:3000",
+    URL_BACKEND_SWAP: process.env.URL_BACKEND_SWAP || "http://localhost:3000",
+    URL_APIP_PRICE: process.env.URL_APIP_PRICE || "http://localhost:3000",
+    URL_API_NFT: process.env.URL_API_NFT || "http://localhost:3000",
+    URL_API_INDEXER: process.env.URL_API_INDEXER || "http://localhost:3000",
+    CLIEN_ID_GOOGLE: process.env.CLIEN_ID_GOOGLE || "http://localhost:3000",
+    URL_EXPLORER: process.env.URL_EXPLORER || "http://localhost:3000",
+    URL_EXPLORER_TXS: process.env.URL_EXPLORER_TXS || "http://localhost:3000",
+    ROUTER_EXPLORER_NEAR: process.env.ROUTER_EXPLORER_NEAR || "http://localhost:3000",
+    ROUTER_RPC: process.env.ROUTER_RPC || "http://localhost:3000",
+    VUE_APP_CONTRACT_NAME: process.env.VUE_APP_CONTRACT_NAME || "http://localhost:3000",
+    VUE_APP_CONTRACT_NAME_USDT: process.env.VUE_APP_CONTRACT_NAME_USDT || "http://localhost:3000",
+    VUE_APP_API_MAIL_URL: process.env.VUE_APP_API_MAIL_URL || "http://localhost:3000",
+    VUE_APP_CHAT_FIREBASE: process.env.VUE_APP_CHAT_FIREBASE,
+    VUE_APP_PASSPHRASE: process.env.VUE_APP_PASSPHRASE,
   },
   // Disable server-side rendering: https://go.nuxtjs.dev/ssr-mode
   ssr: false,
@@ -116,7 +121,18 @@ export default {
     '@nuxtjs/i18n',
     '@nuxtjs/auth-next',
     'nuxt-clipboard2',
+    // GraphQl Apollo Client
+    "@nuxtjs/apollo",
   ],
+
+  apollo: {
+    clientConfigs: {
+      default: {
+        httpEndpoint: process.env.GRAPH_URL,
+        fetchPolicy: 'network-only', // Add this line
+      },
+    },
+  },
 
   auth: {
     strategies: {

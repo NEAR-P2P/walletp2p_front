@@ -83,12 +83,12 @@
 
     <section id="section-explore">
       <div id="section-explore-content">
-        <v-btn
+        <!-- <v-btn
           class="btn-outlined"
           @click="openExplorer()"
         >
         IR A <span data-inner>AREPA DAO</span>
-        </v-btn>
+        </v-btn> -->
 
         <v-btn
           class="btn"

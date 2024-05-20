@@ -32,7 +32,7 @@
 
       <p class="p tcenter">o</p>-->
 
-      <img src="@/assets/sources/logos/logotype.svg" alt="logo icon" class="mx-auto" style="width: min(100%, 170px);">
+      <!-- <img src="@/assets/sources/logos/logotype.svg" alt="logo icon" class="mx-auto" style="width: min(100%, 170px);"> -->
 
       <v-btn
         class="btn"
