@@ -119,7 +119,7 @@
       </v-btn>
     </div>
 
-    <img src="@/assets/sources/logos/logotype.svg" alt="logo icon" class="mx-auto mt-16 mb-8" style="width: 200px">
+    <!-- <img src="@/assets/sources/logos/logotype.svg" alt="logo icon" class="mx-auto mt-16 mb-8" style="width: 200px"> -->
   </div>
 </template>
 
