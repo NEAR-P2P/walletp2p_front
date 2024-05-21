@@ -4,7 +4,7 @@
     <!-- <ModalConfirmMsg ref="confirmMsg" />
     <ModalConnect ref="connect" /> -->
 
-    <img
+    <!-- <img
       id="default-layout-variant-background"
       :src="require(`~/assets/sources/images/circle${
         bgLogo.includes($route.path) ? '-logotype'
@@ -12,7 +12,7 @@
       }.svg`)"
       alt="background"
       :style="`--w: 634px; --top: ${ excludedTopRoutes.includes(route) ? '10px' : '70px'}`"
-    >
+    > -->
 
     <v-main class="parent">
       <nuxt-child data-nuxt="childs" />
