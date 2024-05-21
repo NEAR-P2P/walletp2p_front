@@ -1,12 +1,12 @@
 <template>
   <v-form id="swap" ref="form" v-model="validForm" class="d-flex flex-column">
-    <Header show-append>
+    <!-- <Header show-append>
       <template #prepend>
         <nuxt-link :to="localePath('/')">
           <img src="@/assets/sources/logos/logo.svg" alt="logo" style="--w: 34px">
         </nuxt-link>
       </template>
-    </Header>
+    </Header> -->
 
     <modalWarning
       ref="modalWarning"
@@ -61,7 +61,7 @@
       </v-card>
     </v-dialog>
 
-    <!-- <Header show-append></Header> -->
+    <Header show-append></Header>
 
     <!-- <img src="@/assets/sources/logos/logotype.svg" alt="logo icon" class="mx-auto mt-1" style="width: 290px"> -->
 
@@ -454,6 +454,7 @@ export default {
     },
     async sendSwap() {
       try {
+        // console.log("")
         const account = await walletUtils.nearConnection();
 
         // console.log(this.fromToken.contract)
