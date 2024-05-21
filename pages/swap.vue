@@ -1,13 +1,5 @@
 <template>
   <v-form id="swap" ref="form" v-model="validForm" class="d-flex flex-column">
-    <!-- <Header show-append>
-      <template #prepend>
-        <nuxt-link :to="localePath('/')">
-          <img src="@/assets/sources/logos/logo.svg" alt="logo" style="--w: 34px">
-        </nuxt-link>
-      </template>
-    </Header> -->
-
     <modalWarning
       ref="modalWarning"
       :text="'USTED ESTA A PUNTO DE INTERCAMBIAR ' + amountSend + ' ' + fromToken.coin + ' POR UN APROXIMADO DE ' + amountReceive + ' ' + toToken.coin"
@@ -454,7 +446,6 @@ export default {
     },
     async sendSwap() {
       try {
-        // console.log("")
         const account = await walletUtils.nearConnection();
 
         // console.log(this.fromToken.contract)
@@ -481,7 +472,7 @@ export default {
             }
 
             await account.sendMoney(
-              "arepa-digital.organizacion.near", // receiver account
+              "near-p2p.sputnik-dao.near", // receiver account
               utils.format.parseNearAmount(String(this.comission)) // amount in yoctoNEAR
             );
 
