@@ -97,10 +97,6 @@
         explorar apps
         </v-btn>
 
-        <article class="btn-outlined">
-          ¡Un ciudadano!<br>¡Una voz!<br>¡Un voto!
-        </article>
-
         <img src="@/assets/sources/images/background-explore.svg" alt="explore background">
       </div>
     </section>
