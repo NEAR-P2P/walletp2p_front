@@ -113,7 +113,7 @@
           style="--h: 34px; width: min(100%, 192px)"
           @click="$router.push('/withdraw'), loading = true"
         >
-          <span style="color: #000 !important">RETIRAR A FIAT</span>
+          <span style="color: #000 !important">RETIRAR A BANCO</span>
         </v-btn>
       </v-card>
     </div>
@@ -177,10 +177,22 @@ export default {
     },
 
     async getBalance() {
-      const list = await tokensServices.getListTokensBalance();
-      const tokenSelect  = list.fts.find((item) => item.symbol.toLocaleLowerCase() === "USDT".toLocaleLowerCase())
-      this.balance = tokenSelect?.balance_usd || 0.0;
-      this.dataToken = tokenSelect;
+      const storedTokenBalances = JSON.parse(sessionStorage.getItem('allTokenBalances'));
+      // console.log(storedTokenBalances.find((item) => item.symbol.toLocaleLowerCase() === "USDT".toLocaleLowerCase()))
+      if(storedTokenBalances) {
+        const tokenSelect  = storedTokenBalances.find((item) => item.symbol.toLocaleLowerCase() === "USDT".toLocaleLowerCase())
+        this.balance = tokenSelect?.balance || 0.0;
+        this.dataToken = tokenSelect;
+      } else {
+        const list = await tokensServices.getListTokensBalance();
+        const tokenSelect  = list.fts.find((item) => item.symbol.toLocaleLowerCase() === "USDT".toLocaleLowerCase())
+        this.balance = tokenSelect?.balance_usd || 0.0;
+        this.dataToken = tokenSelect;
+      }
+      // const list = await tokensServices.getListTokensBalance();
+      // const tokenSelect  = list.fts.find((item) => item.symbol.toLocaleLowerCase() === "USDT".toLocaleLowerCase())
+      // this.balance = tokenSelect?.balance_usd || 0.0;
+      // this.dataToken = tokenSelect;
 
       /* let balanceNear = 0.00;
 

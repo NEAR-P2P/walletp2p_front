@@ -144,7 +144,7 @@
         ">
         LOS USUARIOS DEBEN RETIRAR HACIA CUENTAS PROPIAS
 
-        <img src="@/assets/sources/icons/warning-blue.svg" alt="info icon" class="ml-1" style="translate: 0 5px" />
+        <img src="@/assets/sources/icons/warning-orange.svg" alt="info icon" class="ml-1" style="translate: 0 5px" />
       </h6>
     </section>
   </v-form>
@@ -438,7 +438,7 @@ export default {
           const acceptOffer = await account.functionCall({
             contractId: CONTRACT_NAME,
             methodName: "accept_offer",
-            gas: "300000000000000",
+            gas: "30000000000000",
             args: {
               offer_type: 2,
               offer_id: parseInt(this.filteredOffers.id),
