@@ -439,6 +439,13 @@ export default {
           return;
         }
 
+        if ( this.nearBalanceObject < 0.0005) {
+          this.modalNoMessage = "Deposite al menos 0.0005 NEAR para iniciar el P2P";
+          this.modalNoOffers = true;
+          this.btnLoading = false;
+          return;
+        }
+
         this.subcontract = await account.viewFunctionV1(
           CONTRACT_NAME,
           "get_subcontract",
@@ -454,7 +461,7 @@ export default {
             contractId: CONTRACT_NAME,
             methodName: "create_subcontract_user",
             gas: "30000000000000",
-            args: { subaccount_id: this.subcontract.contract, asset: "USDT" },
+            args: { subaccount_id: `${this.address.split(".")[0]}.${CONTRACT_NAME}` , asset: "USDT" },
             attachedDeposit: "1"
           });
           console.log( "create_subcontract_user");
@@ -480,7 +487,7 @@ export default {
            const activarSubcuenta = await account.functionCall({
              contractId: CONTRACT_NAME_USDT,
              methodName: "storage_deposit",
-             args: { account_id: this.subcontract.contract },
+             args: { account_id: `${this.address.split(".")[0]}.${CONTRACT_NAME}`  },
              gas: "30000000000000",
              attachedDeposit: "1250000000000000000000"
            });
@@ -497,7 +504,7 @@ export default {
           contractId: CONTRACT_NAME_USDT,
           methodName: "ft_transfer",
           gas: "15000000000000",
-          args: { receiver_id: this.subcontract.contract, amount: orderAmount },
+          args: { receiver_id: `${this.address.split(".")[0]}.${CONTRACT_NAME}` , amount: orderAmount },
           attachedDeposit: "1"
         });
         console.log("ft_transfer");
