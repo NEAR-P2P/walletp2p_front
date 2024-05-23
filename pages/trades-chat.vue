@@ -176,7 +176,7 @@
     <h6 style="--ff: var(--font2); --fw: 700; --fs: 10px; --lh: 1ch">
       APENAS TERMINE DE TRANSFERIR PUEDE HACER  CLICK
 
-      <img src="@/assets/sources/icons/warning-orange.svg" alt="info icon" class="ml-1" style="translate: 0 5px" @click="dialog2 = true">
+      <img src="@/assets/sources/icons/warning-blue.svg" alt="info icon" class="ml-1" style="translate: 0 5px" @click="dialog2 = true">
     </h6>
   </div>
 </template>

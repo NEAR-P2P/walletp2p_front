@@ -144,7 +144,7 @@
         ">
         LOS USUARIOS DEBEN RETIRAR HACIA CUENTAS PROPIAS
 
-        <img src="@/assets/sources/icons/warning-orange.svg" alt="info icon" class="ml-1" style="translate: 0 5px" />
+        <img src="@/assets/sources/icons/warning-blue.svg" alt="info icon" class="ml-1" style="translate: 0 5px" />
       </h6>
     </section>
   </v-form>
