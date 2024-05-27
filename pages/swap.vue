@@ -368,7 +368,7 @@ export default {
       this.amountReceive = 0
       this.btnLoading = true
 
-      this.amount = this.amountSend * 0.99
+      this.amount = this.amountSend * 0.999
       this.comission = this.amountSend * 0.001
 
       console.log(this.amount)
