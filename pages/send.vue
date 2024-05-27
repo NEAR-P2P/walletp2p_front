@@ -7,12 +7,12 @@
       ></ModalCryptos>
 
       <Header show-append>
-      <template #prepend>
-        <nuxt-link :to="localePath('/')">
-          <img src="@/assets/sources/logos/logo.svg" alt="logo" style="--w: 34px">
-        </nuxt-link>
-      </template>
-    </Header>
+        <template #prepend>
+          <nuxt-link :to="localePath('/')">
+            <img src="@/assets/sources/logos/logo.svg" alt="logo" style="--w: 34px">
+          </nuxt-link>
+        </template>
+      </Header>
 
       <!--<aside class="d-flex" style="gap: 12px; margin-top: 26px;">
         <v-btn class="btn-outlined flex-grow-1" style="--bg: var(--secondary);">
